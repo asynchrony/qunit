@@ -13,6 +13,10 @@ function escapeHtml(s) {
 };
 
 var ReplacementObject = {
+    printTestName: function (testName) {
+        return '<span class="test-name">' + testName + '</span>';
+    },
+
     printModuleName: function (currentModule, name) {
         return '<span class="module-name">' + currentModule + "</span>: " + name;
     },
@@ -85,7 +89,8 @@ var ReplacementObject = {
         },
 
         test: function (testName, expected, callback, async) {
-            var name = '<span class="test-name">' + testName + '</span>', testEnvironment, testEnvironmentArg;
+            var name = ReplacementObject.printTestName(testName);
+            var testEnvironment, testEnvironmentArg;
 
             if (arguments.length === 2) {
                 callback = expected;
@@ -98,7 +103,6 @@ var ReplacementObject = {
             }
 
             if (config.currentModule) {
-                //name = '<span class="module-name">' + config.currentModule + "</span>: " + name;
                 name = ReplacementObject.printModuleName(config.currentModule, name);
             }
 
@@ -215,7 +219,6 @@ var ReplacementObject = {
                     }
 
                     var b = document.createElement("strong");
-//                    b.innerHTML = name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + config.assertions.length + ")</b>";
                     b.innerHTML =  ReplacementObject.printFailedPass(name, bad, good, config.assertions.length);
 
                     addEvent(b, "click", function () {
@@ -710,17 +713,6 @@ var ReplacementObject = {
         var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
 
         var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
-
-        //        message = escapeHtml(message) || (result ? "okay" : "failed");
-        //        message = '<span class="test-message">' + message + "</span>";
-
-        //        expected = escapeHtml(QUnit.jsDump.parse(expected));
-        //        actual = escapeHtml(QUnit.jsDump.parse(actual));
-
-        //        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';
-        //        if (actual != expected) {
-        //            output += ' result: <span class="test-actual">' + actual + '</span>, diff: ' + QUnit.diff(expected, actual);
-        //        }
 
         // can't use ok, as that would double-escape messages
         QUnit.log(result, output);
