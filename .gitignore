@@ -4,3 +4,8 @@
 *.patch
 .DS_Store
 obj
+*.user
+*.config
+Properties
+*.csproj
+bin
