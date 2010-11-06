@@ -12,6 +12,11 @@ function escapeHtml(s) {
     });
 };
 
+function id(name) {
+    return !!(typeof document !== "undefined" && document && document.getElementById) &&
+	document.getElementById(name);
+}
+
 var ReplacementObject = {
     printTestName: function (testName) {
         return '<span class="test-name">' + testName + '</span>';
@@ -42,8 +47,20 @@ var ReplacementObject = {
         return output;
     },
 
-    printFailedPass: function(name, bad, good, assertionsLength) {
+    printFailedPass: function (name, bad, good, assertionsLength) {
         return name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + assertionsLength + ")</b>";
+    },
+
+    printTestRunningMessage: function (name) {
+        var tests = id("qunit-tests");
+        if (tests) {
+            var b = document.createElement("strong");
+            b.innerHTML = "Running " + name;
+            var li = document.createElement("li");
+            li.appendChild(b);
+            li.id = "current-test-output";
+            tests.appendChild(li)
+        }
     }
 };
 
@@ -128,15 +145,7 @@ var ReplacementObject = {
                 config.assertions = [];
                 config.expected = expected;
 
-                var tests = id("qunit-tests");
-                if (tests) {
-                    var b = document.createElement("strong");
-                    b.innerHTML = "Running " + name;
-                    var li = document.createElement("li");
-                    li.appendChild(b);
-                    li.id = "current-test-output";
-                    tests.appendChild(li)
-                }
+                ReplacementObject.printTestRunningMessage(name);
 
                 try {
                     if (!config.pollution) {
