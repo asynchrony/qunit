@@ -17,6 +17,16 @@ function id(name) {
 	document.getElementById(name);
 }
 
+function addEvent(elem, type, fn) {
+    if (elem.addEventListener) {
+        elem.addEventListener(type, fn, false);
+    } else if (elem.attachEvent) {
+        elem.attachEvent("on" + type, fn);
+    } else {
+        fn();
+    }
+}
+
 var ReplacementObject = {
     printTestName: function (testName) {
         return '<span class="test-name">' + testName + '</span>';
@@ -61,7 +71,86 @@ var ReplacementObject = {
             li.id = "current-test-output";
             tests.appendChild(li)
         }
+    },
+
+    printTestResultMessage: function (config, name) {
+        //****** start here
+        var good = 0, bad = 0, tests = id("qunit-tests");
+
+        config.stats.all += config.assertions.length;
+        config.moduleStats.all += config.assertions.length;
+
+        if (tests) {
+            var ol = document.createElement("ol");
+
+            for (var i = 0; i < config.assertions.length; i++) {
+                var assertion = config.assertions[i];
+
+                var li = document.createElement("li");
+                li.className = assertion.result ? "pass" : "fail";
+                li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed"); 
+                ol.appendChild(li);
+
+                if (assertion.result) {
+                    good++;
+                } else {
+                    bad++;
+                    config.stats.bad++;
+                    config.moduleStats.bad++;
+                }
+            }
+            if (bad == 0) {
+                ol.style.display = "none";
+            }
+
+            var b = document.createElement("strong");
+            b.innerHTML = ReplacementObject.printFailedPass(name, bad, good, config.assertions.length);
+
+            addEvent(b, "click", function () {
+                var next = b.nextSibling, display = next.style.display;
+                next.style.display = display === "none" ? "block" : "none";
+            });
+
+            addEvent(b, "dblclick", function (e) {
+                var target = e && e.target ? e.target : window.event.srcElement;
+                if (target.nodeName.toLowerCase() == "span" || target.nodeName.toLowerCase() == "b") {
+                    target = target.parentNode;
+                }
+                if (window.location && target.nodeName.toLowerCase() === "strong") {
+                    window.location.search = "?" + encodeURIComponent(getText([target]).replace(/\(.+\)$/, "").replace(/(^\s*|\s*$)/g, ""));
+                }
+            });
+
+            var li = id("current-test-output");
+            li.id = "";
+            li.className = bad ? "fail" : "pass";
+            li.removeChild(li.firstChild);
+            li.appendChild(b);
+            li.appendChild(ol);
+
+            if (bad) {
+                var toolbar = id("qunit-testrunner-toolbar");
+                if (toolbar) {
+                    toolbar.style.display = "block";
+                    id("qunit-filter-pass").disabled = null;
+                    id("qunit-filter-missing").disabled = null;
+                }
+            }
+
+            //****** end here
+        } else {
+            for (var i = 0; i < config.assertions.length; i++) {
+                if (!config.assertions[i].result) {
+                    bad++;
+                    config.stats.bad++;
+                    config.moduleStats.bad++;
+                }
+            }
+        }
+
+        return bad;
     }
+
 };
 
 
@@ -84,10 +173,11 @@ var ReplacementObject = {
             config.currentModule = name;
 
             synchronize(function () {
-                if (config.currentModule) {
+			if ( config.previousModule ) {
                     QUnit.moduleDone(config.currentModule, config.moduleStats.bad, config.moduleStats.all);
                 }
 
+			config.previousModule = config.currentModule;
                 config.currentModule = name;
                 config.moduleTestEnvironment = testEnvironment;
                 config.moduleStats = { all: 0, bad: 0 };
@@ -167,7 +257,7 @@ var ReplacementObject = {
                     callback.call(testEnvironment);
                 } catch (e) {
                     fail("Test " + name + " died, exception and test follows", e, callback);
-                    QUnit.ok(false, "Died on test #" + (config.assertions.length + 1) + ": " + e.message);
+				QUnit.ok( false, "Died on test #" + (config.assertions.length + 1) + ": " + e.message + " - " + QUnit.jsDump.parse(e) );
                     // else next test will carry the responsibility
                     saveGlobal();
 
@@ -188,88 +278,17 @@ var ReplacementObject = {
             });
 
             synchronize(function () {
-                try {
-                    QUnit.reset();
-                } catch (e) {
-                    fail("reset() failed, following Test " + name + ", exception and reset fn follows", e, QUnit.reset);
-                }
-
                 if (config.expected && config.expected != config.assertions.length) {
                     QUnit.ok(false, "Expected " + config.expected + " assertions, but " + config.assertions.length + " were run");
                 }
 
-                var good = 0, bad = 0,
-				tests = id("qunit-tests");
+                var bad =ReplacementObject.printTestResultMessage(config, name);
 
-                config.stats.all += config.assertions.length;
-                config.moduleStats.all += config.assertions.length;
-
-                if (tests) {
-                    var ol = document.createElement("ol");
-
-                    for (var i = 0; i < config.assertions.length; i++) {
-                        var assertion = config.assertions[i];
-
-                        var li = document.createElement("li");
-                        li.className = assertion.result ? "pass" : "fail";
-                        li.innerHTML = assertion.message || "(no message)";
-                        ol.appendChild(li);
-
-                        if (assertion.result) {
-                            good++;
-                        } else {
-                            bad++;
-                            config.stats.bad++;
-                            config.moduleStats.bad++;
-                        }
-                    }
-                    if (bad == 0) {
-                        ol.style.display = "none";
-                    }
-
-                    var b = document.createElement("strong");
-                    b.innerHTML =  ReplacementObject.printFailedPass(name, bad, good, config.assertions.length);
-
-                    addEvent(b, "click", function () {
-                        var next = b.nextSibling, display = next.style.display;
-                        next.style.display = display === "none" ? "block" : "none";
-                    });
-
-                    addEvent(b, "dblclick", function (e) {
-                        var target = e && e.target ? e.target : window.event.srcElement;
-                        if (target.nodeName.toLowerCase() == "span" || target.nodeName.toLowerCase() == "b") {
-                            target = target.parentNode;
-                        }
-                        if (window.location && target.nodeName.toLowerCase() === "strong") {
-                            window.location.search = "?" + encodeURIComponent(getText([target]).replace(/\(.+\)$/, "").replace(/(^\s*|\s*$)/g, ""));
-                        }
-                    });
-
-                    var li = id("current-test-output");
-                    li.id = "";
-                    li.className = bad ? "fail" : "pass";
-                    li.removeChild(li.firstChild);
-                    li.appendChild(b);
-                    li.appendChild(ol);
-
-                    if (bad) {
-                        var toolbar = id("qunit-testrunner-toolbar");
-                        if (toolbar) {
-                            toolbar.style.display = "block";
-                            id("qunit-filter-pass").disabled = null;
-                            id("qunit-filter-missing").disabled = null;
-                        }
-                    }
-
-                } else {
-                    for (var i = 0; i < config.assertions.length; i++) {
-                        if (!config.assertions[i].result) {
-                            bad++;
-                            config.stats.bad++;
-                            config.moduleStats.bad++;
-                        }
-                    }
-                }
+			try {
+				QUnit.reset();
+			} catch(e) {
+				fail("reset() failed, following Test " + name + ", exception and reset fn follows", e, QUnit.reset);
+			}
 
                 QUnit.testDone(testName, bad, config.assertions.length);
 
@@ -277,6 +296,7 @@ var ReplacementObject = {
                     done();
                 }
             });
+
 
             synchronize(done);
         },
@@ -293,11 +313,15 @@ var ReplacementObject = {
         * @example ok( "asdfasdf".length > 5, "There must be at least 5 chars" );
         */
         ok: function (a, msg) {
+		a = !!a;
+		var details = {
+			result: a,
+			message: msg
+		};
             msg = escapeHtml(msg);
-            QUnit.log(a, msg);
-
+		QUnit.log(a, msg, details);
             config.assertions.push({
-                result: !!a,
+			result: a,
                 message: msg
             });
         },
@@ -315,27 +339,27 @@ var ReplacementObject = {
         * @param String message (optional)
         */
         equal: function (actual, expected, message) {
-            push(expected == actual, actual, expected, message);
+		QUnit.push(expected == actual, actual, expected, message);
         },
 
         notEqual: function (actual, expected, message) {
-            push(expected != actual, actual, expected, message);
+		QUnit.push(expected != actual, actual, expected, message);
         },
 
         deepEqual: function (actual, expected, message) {
-            push(QUnit.equiv(actual, expected), actual, expected, message);
+		QUnit.push(QUnit.equiv(actual, expected), actual, expected, message);
         },
 
         notDeepEqual: function (actual, expected, message) {
-            push(!QUnit.equiv(actual, expected), actual, expected, message);
+		QUnit.push(!QUnit.equiv(actual, expected), actual, expected, message);
         },
 
         strictEqual: function (actual, expected, message) {
-            push(expected === actual, actual, expected, message);
+		QUnit.push(expected === actual, actual, expected, message);
         },
 
         notStrictEqual: function (actual, expected, message) {
-            push(expected !== actual, actual, expected, message);
+		QUnit.push(expected !== actual, actual, expected, message);
         },
 
         raises: function (fn, message) {
@@ -497,6 +521,21 @@ var ReplacementObject = {
             }
         },
 
+        push: function(result, actual, expected, message) {
+            expected = QUnit.jsDump.parse(expected);
+            actual = QUnit.jsDump.parse(actual);
+            var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
+
+            var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
+
+            // can't use ok, as that would double-escape messages
+            QUnit.log(result, output);
+            config.assertions.push({
+            result: !!result,
+            message: output
+            });
+        },
+
         // Safe object type checking
         is: function (type, obj) {
             return QUnit.objectType(obj) == type;
@@ -566,7 +605,16 @@ var ReplacementObject = {
         }
         var banner = id("qunit-header");
         if (banner) {
-            banner.innerHTML = '<a href="' + location.href + '">' + banner.innerHTML + '</a>';
+		var paramsIndex = location.href.lastIndexOf(location.search);
+		if ( paramsIndex > -1 ) {
+			var mainPageLocation = location.href.slice(0, paramsIndex);
+			if ( mainPageLocation == location.href ) {
+				banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
+			} else {
+				var testName = decodeURIComponent(location.search.slice(1));
+				banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
+			}
+		}
         }
 
         var toolbar = id("qunit-testrunner-toolbar");
@@ -702,8 +750,15 @@ var ReplacementObject = {
         return run;
     }
 
+function resultDisplayStyle(passed) {
+	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
+}
+
     function escapeHtml(s) {
-        s = s === null ? "" : s + "";
+	if (!s) {
+		return "";
+	}
+	s = s + "";
         return s.replace(/[\&"<>\\]/g, function (s) {
             switch (s) {
                 case "&": return "&amp;";
@@ -716,20 +771,6 @@ var ReplacementObject = {
         });
     }
 
-    function push(result, actual, expected, message) {
-        expected = QUnit.jsDump.parse(expected);
-        actual = QUnit.jsDump.parse(actual);
-        var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
-
-        var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
-
-        // can't use ok, as that would double-escape messages
-        QUnit.log(result, output);
-        config.assertions.push({
-            result: !!result,
-            message: output
-        });
-    }
 
     function synchronize(callback) {
         config.queue.push(callback);
@@ -1320,7 +1361,7 @@ var ReplacementObject = {
             }
 
             return str;
-        }
+	};
     })();
 
 })(this);
