@@ -196,8 +196,7 @@ var ReplacementObject = {
         },
 
         test: function (testName, expected, callback, async) {
-            var name = ReplacementObject.printTestName(testName);
-            var testEnvironment, testEnvironmentArg;
+            var name = ReplacementObject.printTestName(testName),testEnvironment, testEnvironmentArg;
 
             if (arguments.length === 2) {
                 callback = expected;
@@ -296,7 +295,6 @@ var ReplacementObject = {
                     done();
                 }
             });
-
 
             synchronize(done);
         },
@@ -521,21 +519,6 @@ var ReplacementObject = {
             }
         },
 
-        push: function(result, actual, expected, message) {
-            expected = QUnit.jsDump.parse(expected);
-            actual = QUnit.jsDump.parse(actual);
-            var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
-
-            var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
-
-            // can't use ok, as that would double-escape messages
-            QUnit.log(result, output);
-            config.assertions.push({
-            result: !!result,
-            message: output
-            });
-        },
-
         // Safe object type checking
         is: function (type, obj) {
             return QUnit.objectType(obj) == type;
@@ -573,6 +556,28 @@ var ReplacementObject = {
                 return "object";
             }
             return undefined;
+        },
+
+        push: function(result, actual, expected, message) {
+		    var details = {
+			    result: result,
+			    message: message,
+			    actual: actual,
+			    expected: expected
+		    };
+
+            expected = QUnit.jsDump.parse(expected);
+            actual = QUnit.jsDump.parse(actual);
+            var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
+
+            var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
+
+		    QUnit.log(result, message, details);
+		
+		    config.assertions.push({
+			    result: !!result,
+			    message: output
+		    });
         },
 
         // Logging callbacks
@@ -697,9 +702,6 @@ var ReplacementObject = {
 
         var banner = id("qunit-banner"),
 		tests = id("qunit-tests"),
-        //		html = ['Tests completed in ',
-        //		+new Date - config.started, ' milliseconds.<br/>',
-        //		'<span class="passed">', config.stats.all - config.stats.bad, '</span> tests of <span class="total">', config.stats.all, '</span> passed, <span class="failed">', config.stats.bad, '</span> failed.'].join('');
 		html = ReplacementObject.printResultsFooter(config.started, config.stats).join('');
 
         if (banner) {
@@ -753,24 +755,6 @@ var ReplacementObject = {
 function resultDisplayStyle(passed) {
 	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
 }
-
-    function escapeHtml(s) {
-	if (!s) {
-		return "";
-	}
-	s = s + "";
-        return s.replace(/[\&"<>\\]/g, function (s) {
-            switch (s) {
-                case "&": return "&amp;";
-                case "\\": return "\\\\";
-                case '"': return '\"';
-                case "<": return "&lt;";
-                case ">": return "&gt;";
-                default: return s;
-            }
-        });
-    }
-
 
     function synchronize(callback) {
         config.queue.push(callback);
@@ -853,21 +837,6 @@ function resultDisplayStyle(passed) {
         }
 
         return a;
-    }
-
-    function addEvent(elem, type, fn) {
-        if (elem.addEventListener) {
-            elem.addEventListener(type, fn, false);
-        } else if (elem.attachEvent) {
-            elem.attachEvent("on" + type, fn);
-        } else {
-            fn();
-        }
-    }
-
-    function id(name) {
-        return !!(typeof document !== "undefined" && document && document.getElementById) &&
-		document.getElementById(name);
     }
 
     // Test for equality any JavaScript type.
