@@ -1,14 +1,18 @@
 function escapeHtml(s) {
-    s = s === null ? "" : s + "";
-    return s.replace(/[\&"<>\\]/g, function (s) {
-        switch (s) {
-            case "&": return "&amp;";
-            case "\\": return "\\\\";
-            case '"': return '\"';
-            case "<": return "&lt;";
-            case ">": return "&gt;";
-            default: return s;
-        }
+ if (!s) {
+    return "";
+ }
+ 
+ s = s + "";
+ return s.replace(/[\&"<>\\]/g, function(s) {
+     switch(s) {
+         case "&": return "&amp;";
+         case "\\": return "\\\\";
+         case '"': return '\"';
+         case "<": return "&lt;";
+         case ">": return "&gt;";
+         default: return s;
+     }
     });
 };
 
@@ -569,6 +573,8 @@ var ReplacementObject = {
             expected = QUnit.jsDump.parse(expected);
             actual = QUnit.jsDump.parse(actual);
             var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
+
+            console.log("message: " + message);
 
             var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
 
