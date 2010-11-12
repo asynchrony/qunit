@@ -262,6 +262,17 @@ var ReplacementObject = {
         if (main) {
             config.fixture = main.innerHTML;
         }
+    },
+
+    reset: function (config) {
+        if (window.jQuery) {
+            jQuery("#main, #qunit-fixture").html(config.fixture);
+        } else {
+            var main = id('main') || id('qunit-fixture');
+            if (main) {
+                main.innerHTML = config.fixture;
+            }
+        }
     }
 
 };
@@ -369,7 +380,7 @@ var ReplacementObject = {
                     callback.call(testEnvironment);
                 } catch (e) {
                     fail("Test " + name + " died, exception and test follows", e, callback);
-				QUnit.ok( false, "Died on test #" + (config.assertions.length + 1) + ": " + e.message + " - " + QUnit.jsDump.parse(e) );
+				    QUnit.ok( false, "Died on test #" + (config.assertions.length + 1) + ": " + e.message + " - " + QUnit.jsDump.parse(e) );
                     // else next test will carry the responsibility
                     saveGlobal();
 
@@ -394,13 +405,13 @@ var ReplacementObject = {
                     QUnit.ok(false, "Expected " + config.expected + " assertions, but " + config.assertions.length + " were run");
                 }
 
-                var bad =ReplacementObject.printTestResultMessage(config, name);
+                var bad = ReplacementObject.printTestResultMessage(config, name);
 
-			try {
-				QUnit.reset();
-			} catch(e) {
-				fail("reset() failed, following Test " + name + ", exception and reset fn follows", e, QUnit.reset);
-			}
+			    try {
+				    QUnit.reset();
+			    } catch(e) {
+				    fail("reset() failed, following Test " + name + ", exception and reset fn follows", e, QUnit.reset);
+			    }
 
                 QUnit.testDone(testName, bad, config.assertions.length);
 
@@ -430,7 +441,7 @@ var ReplacementObject = {
 			message: msg
 		};
             msg = escapeHtml(msg);
-		QUnit.log(a, msg, details);
+		    QUnit.log(a, msg, details);
             config.assertions.push({
 			result: a,
                 message: msg
@@ -589,14 +600,7 @@ var ReplacementObject = {
         * If jQuery is available, uses jQuery's html(), otherwise just innerHTML.
         */
         reset: function () {
-            if (window.jQuery) {
-                jQuery("#main, #qunit-fixture").html(config.fixture);
-            } else {
-                var main = id('main') || id('qunit-fixture');
-                if (main) {
-                    main.innerHTML = config.fixture;
-                }
-            }
+            ReplacementObject.reset(config);
         },
 
         /**
@@ -771,7 +775,7 @@ var ReplacementObject = {
         return run;
     }
 
-    //???
+    //??? -- Not being used ???
 //function resultDisplayStyle(passed) {
 //	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
 //}
