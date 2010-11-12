@@ -171,9 +171,30 @@ var ReplacementObject = {
         if (result) {
             result.parentNode.removeChild(result);
         }
+    },
+
+    printFooter: function (config) {
+        var banner = id("qunit-banner"),
+		tests = id("qunit-tests"),
+		html = ReplacementObject.printResultsFooter(config.started, config.stats).join('');
+
+        if (banner) {
+            banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
+        }
+
+        if (tests) {
+            var result = id("qunit-testresult");
+
+            if (!result) {
+                result = document.createElement("p");
+                result.id = "qunit-testresult";
+                result.className = "result";
+                tests.parentNode.insertBefore(result, tests.nextSibling);
+            }
+
+            result.innerHTML = html;
+        }
     }
-
-
 
 };
 
@@ -713,26 +734,7 @@ var ReplacementObject = {
         }
 
         //???
-        var banner = id("qunit-banner"),
-		tests = id("qunit-tests"),
-		html = ReplacementObject.printResultsFooter(config.started, config.stats).join('');
-
-        if (banner) {
-            banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
-        }
-
-        if (tests) {
-            var result = id("qunit-testresult");
-
-            if (!result) {
-                result = document.createElement("p");
-                result.id = "qunit-testresult";
-                result.className = "result";
-                tests.parentNode.insertBefore(result, tests.nextSibling);
-            }
-
-            result.innerHTML = html;
-        }
+        ReplacementObject.printFooter(config);
 
         QUnit.done(config.stats.bad, config.stats.all);
     }
