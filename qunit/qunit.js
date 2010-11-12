@@ -194,6 +194,74 @@ var ReplacementObject = {
 
             result.innerHTML = html;
         }
+    }, 
+
+    setupOnWindowLoad: function(config)  {
+        var userAgent = id("qunit-userAgent");
+        if (userAgent) {
+            userAgent.innerHTML = navigator.userAgent;
+        }
+        var banner = id("qunit-header");
+        if (banner) {
+		var paramsIndex = location.href.lastIndexOf(location.search);
+		if ( paramsIndex > -1 ) {
+			var mainPageLocation = location.href.slice(0, paramsIndex);
+			if ( mainPageLocation == location.href ) {
+				banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
+			} else {
+				var testName = decodeURIComponent(location.search.slice(1));
+				banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
+			}
+		}
+        }
+
+        var toolbar = id("qunit-testrunner-toolbar");
+        if (toolbar) {
+            toolbar.style.display = "none";
+
+            var filter = document.createElement("input");
+            filter.type = "checkbox";
+            filter.id = "qunit-filter-pass";
+            filter.disabled = true;
+            addEvent(filter, "click", function () {
+                var li = document.getElementsByTagName("li");
+                for (var i = 0; i < li.length; i++) {
+                    if (li[i].className.indexOf("pass") > -1) {
+                        li[i].style.display = filter.checked ? "none" : "";
+                    }
+                }
+            });
+            toolbar.appendChild(filter);
+
+            var label = document.createElement("label");
+            label.setAttribute("for", "qunit-filter-pass");
+            label.innerHTML = "Hide passed tests";
+            toolbar.appendChild(label);
+
+            var missing = document.createElement("input");
+            missing.type = "checkbox";
+            missing.id = "qunit-filter-missing";
+            missing.disabled = true;
+            addEvent(missing, "click", function () {
+                var li = document.getElementsByTagName("li");
+                for (var i = 0; i < li.length; i++) {
+                    if (li[i].className.indexOf("fail") > -1 && li[i].innerHTML.indexOf('missing test - untested code is broken code') > -1) {
+                        li[i].parentNode.parentNode.style.display = missing.checked ? "none" : "block";
+                    }
+                }
+            });
+            toolbar.appendChild(missing);
+
+            label = document.createElement("label");
+            label.setAttribute("for", "qunit-filter-missing");
+            label.innerHTML = "Hide missing tests (untested code is broken code)";
+            toolbar.appendChild(label);
+        }
+
+        var main = id('main') || id('qunit-fixture');
+        if (main) {
+            config.fixture = main.innerHTML;
+        }
     }
 
 };
@@ -637,71 +705,7 @@ var ReplacementObject = {
 
         config.blocking = false;
 
-        var userAgent = id("qunit-userAgent");
-        if (userAgent) {
-            userAgent.innerHTML = navigator.userAgent;
-        }
-        var banner = id("qunit-header");
-        if (banner) {
-		var paramsIndex = location.href.lastIndexOf(location.search);
-		if ( paramsIndex > -1 ) {
-			var mainPageLocation = location.href.slice(0, paramsIndex);
-			if ( mainPageLocation == location.href ) {
-				banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
-			} else {
-				var testName = decodeURIComponent(location.search.slice(1));
-				banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
-			}
-		}
-        }
-
-        var toolbar = id("qunit-testrunner-toolbar");
-        if (toolbar) {
-            toolbar.style.display = "none";
-
-            var filter = document.createElement("input");
-            filter.type = "checkbox";
-            filter.id = "qunit-filter-pass";
-            filter.disabled = true;
-            addEvent(filter, "click", function () {
-                var li = document.getElementsByTagName("li");
-                for (var i = 0; i < li.length; i++) {
-                    if (li[i].className.indexOf("pass") > -1) {
-                        li[i].style.display = filter.checked ? "none" : "";
-                    }
-                }
-            });
-            toolbar.appendChild(filter);
-
-            var label = document.createElement("label");
-            label.setAttribute("for", "qunit-filter-pass");
-            label.innerHTML = "Hide passed tests";
-            toolbar.appendChild(label);
-
-            var missing = document.createElement("input");
-            missing.type = "checkbox";
-            missing.id = "qunit-filter-missing";
-            missing.disabled = true;
-            addEvent(missing, "click", function () {
-                var li = document.getElementsByTagName("li");
-                for (var i = 0; i < li.length; i++) {
-                    if (li[i].className.indexOf("fail") > -1 && li[i].innerHTML.indexOf('missing test - untested code is broken code') > -1) {
-                        li[i].parentNode.parentNode.style.display = missing.checked ? "none" : "block";
-                    }
-                }
-            });
-            toolbar.appendChild(missing);
-
-            label = document.createElement("label");
-            label.setAttribute("for", "qunit-filter-missing");
-            label.innerHTML = "Hide missing tests (untested code is broken code)";
-            toolbar.appendChild(label);
-        }
-
-        var main = id('main') || id('qunit-fixture');
-        if (main) {
-            config.fixture = main.innerHTML;
-        }
+        ReplacementObject.setupOnWindowLoad(config);
 
         if (config.autostart) {
             QUnit.start();
@@ -768,9 +772,9 @@ var ReplacementObject = {
     }
 
     //???
-function resultDisplayStyle(passed) {
-	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
-}
+//function resultDisplayStyle(passed) {
+//	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
+//}
 
     function synchronize(callback) {
         config.queue.push(callback);
