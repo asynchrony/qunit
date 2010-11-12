@@ -92,7 +92,7 @@ var ReplacementObject = {
 
                 var li = document.createElement("li");
                 li.className = assertion.result ? "pass" : "fail";
-                li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed"); 
+                li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
                 ol.appendChild(li);
 
                 if (assertion.result) {
@@ -153,7 +153,27 @@ var ReplacementObject = {
         }
 
         return bad;
+    },
+
+    clearHeaders: function () {
+        var tests = id("qunit-tests"),
+			banner = id("qunit-banner"),
+			result = id("qunit-testresult");
+
+        if (tests) {
+            tests.innerHTML = "";
+        }
+
+        if (banner) {
+            banner.className = "";
+        }
+
+        if (result) {
+            result.parentNode.removeChild(result);
+        }
     }
+
+
 
 };
 
@@ -341,27 +361,27 @@ var ReplacementObject = {
         * @param String message (optional)
         */
         equal: function (actual, expected, message) {
-		QUnit.push(expected == actual, actual, expected, message);
+		    QUnit.push(expected == actual, actual, expected, message);
         },
 
         notEqual: function (actual, expected, message) {
-		QUnit.push(expected != actual, actual, expected, message);
+		    QUnit.push(expected != actual, actual, expected, message);
         },
 
         deepEqual: function (actual, expected, message) {
-		QUnit.push(QUnit.equiv(actual, expected), actual, expected, message);
+		    QUnit.push(QUnit.equiv(actual, expected), actual, expected, message);
         },
 
         notDeepEqual: function (actual, expected, message) {
-		QUnit.push(!QUnit.equiv(actual, expected), actual, expected, message);
+		    QUnit.push(!QUnit.equiv(actual, expected), actual, expected, message);
         },
 
         strictEqual: function (actual, expected, message) {
-		QUnit.push(expected === actual, actual, expected, message);
+		    QUnit.push(expected === actual, actual, expected, message);
         },
 
         notStrictEqual: function (actual, expected, message) {
-		QUnit.push(expected !== actual, actual, expected, message);
+		    QUnit.push(expected !== actual, actual, expected, message);
         },
 
         raises: function (fn, message) {
@@ -417,7 +437,7 @@ var ReplacementObject = {
         blocking: true
     };
 
-    // Load paramaters
+    // Load paramaters //???
     (function () {
         var location = window.location || { search: "", protocol: "file:" },
 		GETParams = location.search.slice(1).split('&');
@@ -470,21 +490,8 @@ var ReplacementObject = {
                 queue: []
             });
 
-            var tests = id("qunit-tests"),
-			banner = id("qunit-banner"),
-			result = id("qunit-testresult");
-
-            if (tests) {
-                tests.innerHTML = "";
-            }
-
-            if (banner) {
-                banner.className = "";
-            }
-
-            if (result) {
-                result.parentNode.removeChild(result);
-            }
+            //???
+            ReplacementObject.clearHeaders();
         },
 
         /**
@@ -574,8 +581,6 @@ var ReplacementObject = {
             actual = QUnit.jsDump.parse(actual);
             var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
 
-            console.log("message: " + message);
-
             var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
 
 		    QUnit.log(result, message, details);
@@ -600,6 +605,7 @@ var ReplacementObject = {
         config.autorun = true;
     }
 
+    //???
     addEvent(window, "load", function () {
         QUnit.begin();
 
@@ -706,6 +712,7 @@ var ReplacementObject = {
             QUnit.moduleDone(config.currentModule, config.moduleStats.bad, config.moduleStats.all);
         }
 
+        //???
         var banner = id("qunit-banner"),
 		tests = id("qunit-tests"),
 		html = ReplacementObject.printResultsFooter(config.started, config.stats).join('');
@@ -758,6 +765,7 @@ var ReplacementObject = {
         return run;
     }
 
+    //???
 function resultDisplayStyle(passed) {
 	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
 }
