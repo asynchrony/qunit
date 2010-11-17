@@ -40,12 +40,6 @@ var ReplacementObject = {
         return '<span class="module-name">' + currentModule + "</span>: " + name;
     },
 
-    printResultsFooter: function (started, stats) {
-        return ['Tests completed in ',
-		+new Date - started, ' milliseconds.<br/>',
-		'<span class="passed">', stats.all - stats.bad, '</span> tests of <span class="total">', stats.all, '</span> passed, <span class="failed">', stats.bad, '</span> failed.']
-    },
-
     pushMessage: function (result, actual, expected, message, diff) {
         message = escapeHtml(message) || (result ? "okay" : "failed");
         message = '<span class="test-message">' + message + "</span>";
@@ -59,10 +53,6 @@ var ReplacementObject = {
         }
 
         return output;
-    },
-
-    printFailedPass: function (name, bad, good, assertionsLength) {
-        return name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + assertionsLength + ")</b>";
     },
 
     printTestRunningMessage: function (name) {
@@ -108,7 +98,7 @@ var ReplacementObject = {
             }
 
             var b = document.createElement("strong");
-            b.innerHTML = ReplacementObject.printFailedPass(name, bad, good, config.assertions.length);
+            b.innerHTML = name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + config.assertions.length + ")</b>";
 
             addEvent(b, "click", function () {
                 var next = b.nextSibling, display = next.style.display;
@@ -176,7 +166,10 @@ var ReplacementObject = {
     printFooter: function (config) {
         var banner = id("qunit-banner"),
 		tests = id("qunit-tests"),
-		html = ReplacementObject.printResultsFooter(config.started, config.stats).join('');
+
+        html = ['Tests completed in ',
+		+new Date - config.started, ' milliseconds.<br/>',
+		'<span class="passed">', config.stats.all - config.stats.bad, '</span> tests of <span class="total">', config.stats.all, '</span> passed, <span class="failed">', config.stats.bad, '</span> failed.'].join('');
 
         if (banner) {
             banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
