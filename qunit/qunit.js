@@ -1,20 +1,4 @@
-function escapeHtml(s) {
- if (!s) {
-    return "";
- }
- 
- s = s + "";
- return s.replace(/[\&"<>\\]/g, function(s) {
-     switch(s) {
-         case "&": return "&amp;";
-         case "\\": return "\\\\";
-         case '"': return '\"';
-         case "<": return "&lt;";
-         case ">": return "&gt;";
-         default: return s;
-     }
-    });
-};
+
 
 function addEvent(elem, type, fn) {
     if (elem.addEventListener) {
@@ -38,11 +22,11 @@ var HtmlOutputWriter = {
     },
 
     pushMessage: function (result, actual, expected, message, diff) {
-        message = escapeHtml(message) || (result ? "okay" : "failed"); //--Does this need to come out?
+        message = this.escapeHtml(message) || (result ? "okay" : "failed"); //--Does this need to come out?
         message = '<span class="test-message">' + message + "</span>";
 
-        expected = escapeHtml(expected);
-        actual = escapeHtml(actual);
+        expected = this.escapeHtml(expected);
+        actual = this.escapeHtml(actual);
 
         var output = message + ', expected: <span class="test-expected">' + expected + '</span>';  //--Do we care about part of the format?
         if (actual != expected) {
@@ -65,7 +49,7 @@ var HtmlOutputWriter = {
     },
 
     printTestResultMessage: function (config, name) {
-        var good = 0, bad = 0, 
+        var good = 0, bad = 0,
 			tests = this.id("qunit-tests");
 
         config.stats.all += config.assertions.length;       //--Seems like business logic
@@ -116,7 +100,7 @@ var HtmlOutputWriter = {
             var li = this.id("current-test-output");
             li.id = "";
             li.className = bad ? "fail" : "pass";
-			li.style.display = HtmlOutputWriter.resultDisplayStyle(!bad);
+            li.style.display = HtmlOutputWriter.resultDisplayStyle(!bad);
             li.removeChild(li.firstChild);
             li.appendChild(b);
             li.appendChild(ol);
@@ -143,8 +127,8 @@ var HtmlOutputWriter = {
         return bad;
     },
 
-   resultDisplayStyle: function(passed) {
-	    return passed && this.id("qunit-filter-pass") && this.id("qunit-filter-pass").checked ? 'none' : '';
+    resultDisplayStyle: function (passed) {
+        return passed && this.id("qunit-filter-pass") && this.id("qunit-filter-pass").checked ? 'none' : '';
     },
 
     clearHeaders: function () {
@@ -189,25 +173,25 @@ var HtmlOutputWriter = {
 
             result.innerHTML = html;
         }
-    }, 
+    },
 
-    setupOnWindowLoad: function(config)  {
+    setupOnWindowLoad: function (config) {
         var userAgent = this.id("qunit-userAgent");
         if (userAgent) {
             userAgent.innerHTML = navigator.userAgent;
         }
         var banner = this.id("qunit-header");
         if (banner) {
-		var paramsIndex = location.href.lastIndexOf(location.search);
-		if ( paramsIndex > -1 ) {
-			var mainPageLocation = location.href.slice(0, paramsIndex);
-			if ( mainPageLocation == location.href ) {
-				banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
-			} else {
-				var testName = decodeURIComponent(location.search.slice(1));
-				banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
-			}
-		}
+            var paramsIndex = location.href.lastIndexOf(location.search);
+            if (paramsIndex > -1) {
+                var mainPageLocation = location.href.slice(0, paramsIndex);
+                if (mainPageLocation == location.href) {
+                    banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
+                } else {
+                    var testName = decodeURIComponent(location.search.slice(1));
+                    banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
+                }
+            }
         }
 
         var toolbar = this.id("qunit-testrunner-toolbar");
@@ -270,7 +254,30 @@ var HtmlOutputWriter = {
         }
     },
 
-    id : function (name) {
+    escapeMessageForOutput: function (msg) {
+        return this.escapeHtml(msg);
+    },
+
+
+    escapeHtml: function (s) {
+        if (!s) {
+            return "";
+        }
+
+        s = s + "";
+        return s.replace(/[\&"<>\\]/g, function (s) {
+            switch (s) {
+                case "&": return "&amp;";
+                case "\\": return "\\\\";
+                case '"': return '\"';
+                case "<": return "&lt;";
+                case ">": return "&gt;";
+                default: return s;
+            }
+        });
+    },
+
+    id: function (name) {
         return !!(typeof document !== "undefined" && document && document.getElementById) &&
 	    document.getElementById(name);
     }
@@ -440,8 +447,7 @@ var HtmlOutputWriter = {
 			result: a,
 			message: msg
 		};
-            msg = escapeHtml(msg);  //---Does this need to be here?
-		    QUnit.log(a, msg, details);
+		    QUnit.log(a, HtmlOutputWriter.escapeMessageForOutput(msg), details);
             config.assertions.push({
 			result: a,
                 message: msg
@@ -676,7 +682,7 @@ var HtmlOutputWriter = {
 
             var output = HtmlOutputWriter.pushMessage(result, actual, expected, message, diff);
 
-		    QUnit.log(result, message, details);
+		    QUnit.log(result, output, details);
 		
 		    config.assertions.push({
 			    result: !!result,
