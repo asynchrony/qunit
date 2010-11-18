@@ -68,7 +68,8 @@ var HtmlOutputWriter = {
     },
 
     printTestResultMessage: function (config, name) {
-        var good = 0, bad = 0, tests = id("qunit-tests");
+        var good = 0, bad = 0, 
+			tests = id("qunit-tests");
 
         config.stats.all += config.assertions.length;       //--Seems like business logic
         config.moduleStats.all += config.assertions.length;
@@ -118,6 +119,7 @@ var HtmlOutputWriter = {
             var li = id("current-test-output");
             li.id = "";
             li.className = bad ? "fail" : "pass";
+			li.style.display = resultDisplayStyle(!bad);
             li.removeChild(li.firstChild);
             li.appendChild(b);
             li.appendChild(ol);
@@ -767,10 +769,10 @@ var HtmlOutputWriter = {
         return run;
     }
 
-    //??? -- Not being used ???
-//function resultDisplayStyle(passed) {
-//	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
-//}
+    //??? -- Not being used ??? -- Fix me
+function resultDisplayStyle(passed) {
+	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
+}
 
     function synchronize(callback) {
         config.queue.push(callback);
