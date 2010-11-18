@@ -16,11 +16,6 @@ function escapeHtml(s) {
     });
 };
 
-function id(name) {
-    return !!(typeof document !== "undefined" && document && document.getElementById) &&
-	document.getElementById(name);
-}
-
 function addEvent(elem, type, fn) {
     if (elem.addEventListener) {
         elem.addEventListener(type, fn, false);
@@ -29,7 +24,9 @@ function addEvent(elem, type, fn) {
     } else {
         fn();
     }
-}
+};
+
+
 
 var HtmlOutputWriter = {
     printTestName: function (testName) {
@@ -56,7 +53,7 @@ var HtmlOutputWriter = {
     },
 
     printTestRunningMessage: function (name) {
-        var tests = id("qunit-tests");
+        var tests = this.id("qunit-tests");
         if (tests) {
             var b = document.createElement("strong");
             b.innerHTML = "Running " + name;
@@ -69,7 +66,7 @@ var HtmlOutputWriter = {
 
     printTestResultMessage: function (config, name) {
         var good = 0, bad = 0, 
-			tests = id("qunit-tests");
+			tests = this.id("qunit-tests");
 
         config.stats.all += config.assertions.length;       //--Seems like business logic
         config.moduleStats.all += config.assertions.length;
@@ -116,20 +113,20 @@ var HtmlOutputWriter = {
                 }
             });
 
-            var li = id("current-test-output");
+            var li = this.id("current-test-output");
             li.id = "";
             li.className = bad ? "fail" : "pass";
-			li.style.display = resultDisplayStyle(!bad);
+			li.style.display = HtmlOutputWriter.resultDisplayStyle(!bad);
             li.removeChild(li.firstChild);
             li.appendChild(b);
             li.appendChild(ol);
 
             if (bad) {
-                var toolbar = id("qunit-testrunner-toolbar");
+                var toolbar = this.id("qunit-testrunner-toolbar");
                 if (toolbar) {
                     toolbar.style.display = "block";
-                    id("qunit-filter-pass").disabled = null;
-                    id("qunit-filter-missing").disabled = null;
+                    this.id("qunit-filter-pass").disabled = null;
+                    this.id("qunit-filter-missing").disabled = null;
                 }
             }
 
@@ -146,10 +143,14 @@ var HtmlOutputWriter = {
         return bad;
     },
 
+   resultDisplayStyle: function(passed) {
+	    return passed && this.id("qunit-filter-pass") && this.id("qunit-filter-pass").checked ? 'none' : '';
+    },
+
     clearHeaders: function () {
-        var tests = id("qunit-tests"),
-			banner = id("qunit-banner"),
-			result = id("qunit-testresult");
+        var tests = this.id("qunit-tests"),
+			banner = this.id("qunit-banner"),
+			result = this.id("qunit-testresult");
 
         if (tests) {
             tests.innerHTML = "";
@@ -165,8 +166,8 @@ var HtmlOutputWriter = {
     },
 
     printFooter: function (config) {
-        var banner = id("qunit-banner"),
-		tests = id("qunit-tests"),
+        var banner = this.id("qunit-banner"),
+		tests = this.id("qunit-tests"),
 
         html = ['Tests completed in ',
 		+new Date - config.started, ' milliseconds.<br/>',
@@ -177,7 +178,7 @@ var HtmlOutputWriter = {
         }
 
         if (tests) {
-            var result = id("qunit-testresult");
+            var result = this.id("qunit-testresult");
 
             if (!result) {
                 result = document.createElement("p");
@@ -191,11 +192,11 @@ var HtmlOutputWriter = {
     }, 
 
     setupOnWindowLoad: function(config)  {
-        var userAgent = id("qunit-userAgent");
+        var userAgent = this.id("qunit-userAgent");
         if (userAgent) {
             userAgent.innerHTML = navigator.userAgent;
         }
-        var banner = id("qunit-header");
+        var banner = this.id("qunit-header");
         if (banner) {
 		var paramsIndex = location.href.lastIndexOf(location.search);
 		if ( paramsIndex > -1 ) {
@@ -209,7 +210,7 @@ var HtmlOutputWriter = {
 		}
         }
 
-        var toolbar = id("qunit-testrunner-toolbar");
+        var toolbar = this.id("qunit-testrunner-toolbar");
         if (toolbar) {
             toolbar.style.display = "none";
 
@@ -252,7 +253,7 @@ var HtmlOutputWriter = {
             toolbar.appendChild(label);
         }
 
-        var main = id('main') || id('qunit-fixture');
+        var main = this.id('main') || this.id('qunit-fixture');
         if (main) {
             config.fixture = main.innerHTML;
         }
@@ -262,11 +263,16 @@ var HtmlOutputWriter = {
         if (window.jQuery) {
             jQuery("#main, #qunit-fixture").html(config.fixture);
         } else {
-            var main = id('main') || id('qunit-fixture');
+            var main = this.id('main') || this.id('qunit-fixture');
             if (main) {
                 main.innerHTML = config.fixture;
             }
         }
+    },
+
+    id : function (name) {
+        return !!(typeof document !== "undefined" && document && document.getElementById) &&
+	    document.getElementById(name);
     }
 
 };
@@ -434,7 +440,7 @@ var HtmlOutputWriter = {
 			result: a,
 			message: msg
 		};
-            msg = escapeHtml(msg);
+            msg = escapeHtml(msg);  //---Does this need to be here?
 		    QUnit.log(a, msg, details);
             config.assertions.push({
 			result: a,
@@ -692,7 +698,7 @@ var HtmlOutputWriter = {
         config.autorun = true;
     }
 
-    //???
+    // Only instance of addEvent outside of Output writing
     addEvent(window, "load", function () {
         QUnit.begin();
 
@@ -768,11 +774,6 @@ var HtmlOutputWriter = {
 
         return run;
     }
-
-    //??? -- Not being used ??? -- Fix me
-function resultDisplayStyle(passed) {
-	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
-}
 
     function synchronize(callback) {
         config.queue.push(callback);
