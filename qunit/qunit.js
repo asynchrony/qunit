@@ -31,7 +31,7 @@ function addEvent(elem, type, fn) {
     }
 }
 
-var ReplacementObject = {
+var HtmlOutputWriter = {
     printTestName: function (testName) {
         return '<span class="test-name">' + testName + '</span>';
     },
@@ -41,13 +41,13 @@ var ReplacementObject = {
     },
 
     pushMessage: function (result, actual, expected, message, diff) {
-        message = escapeHtml(message) || (result ? "okay" : "failed");
+        message = escapeHtml(message) || (result ? "okay" : "failed"); //--Does this need to come out?
         message = '<span class="test-message">' + message + "</span>";
 
         expected = escapeHtml(expected);
         actual = escapeHtml(actual);
 
-        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';
+        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';  //--Do we care about part of the format?
         if (actual != expected) {
             output += ' result: <span class="test-actual">' + actual + '</span>, diff: ' + diff;
         }
@@ -68,10 +68,9 @@ var ReplacementObject = {
     },
 
     printTestResultMessage: function (config, name) {
-        //****** start here
         var good = 0, bad = 0, tests = id("qunit-tests");
 
-        config.stats.all += config.assertions.length;
+        config.stats.all += config.assertions.length;       //--Seems like business logic
         config.moduleStats.all += config.assertions.length;
 
         if (tests) {
@@ -80,7 +79,7 @@ var ReplacementObject = {
             for (var i = 0; i < config.assertions.length; i++) {
                 var assertion = config.assertions[i];
 
-                var li = document.createElement("li");
+                var li = document.createElement("li");          //--This should probably come out -- Begin
                 li.className = assertion.result ? "pass" : "fail";
                 li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
                 ol.appendChild(li);
@@ -92,7 +91,8 @@ var ReplacementObject = {
                     config.stats.bad++;
                     config.moduleStats.bad++;
                 }
-            }
+            }                                                   //--This should probably come out -- End
+
             if (bad == 0) {
                 ol.style.display = "none";
             }
@@ -131,7 +131,6 @@ var ReplacementObject = {
                 }
             }
 
-            //****** end here
         } else {
             for (var i = 0; i < config.assertions.length; i++) {
                 if (!config.assertions[i].result) {
@@ -313,7 +312,7 @@ var ReplacementObject = {
         },
 
         test: function (testName, expected, callback, async) {
-            var name = ReplacementObject.printTestName(testName),testEnvironment, testEnvironmentArg;
+            var name = HtmlOutputWriter.printTestName(testName),testEnvironment, testEnvironmentArg;
 
             if (arguments.length === 2) {
                 callback = expected;
@@ -326,7 +325,7 @@ var ReplacementObject = {
             }
 
             if (config.currentModule) {
-                name = ReplacementObject.printModuleName(config.currentModule, name);
+                name = HtmlOutputWriter.printModuleName(config.currentModule, name);
             }
 
             if (!validTest(config.currentModule + ": " + testName)) {
@@ -351,7 +350,7 @@ var ReplacementObject = {
                 config.assertions = [];
                 config.expected = expected;
 
-                ReplacementObject.printTestRunningMessage(name);
+                HtmlOutputWriter.printTestRunningMessage(name);
 
                 try {
                     if (!config.pollution) {
@@ -398,7 +397,7 @@ var ReplacementObject = {
                     QUnit.ok(false, "Expected " + config.expected + " assertions, but " + config.assertions.length + " were run");
                 }
 
-                var bad = ReplacementObject.printTestResultMessage(config, name);
+                var bad = HtmlOutputWriter.printTestResultMessage(config, name);
 
 			    try {
 				    QUnit.reset();
@@ -584,7 +583,7 @@ var ReplacementObject = {
             });
 
             //???
-            ReplacementObject.clearHeaders();
+            HtmlOutputWriter.clearHeaders();
         },
 
         /**
@@ -593,7 +592,7 @@ var ReplacementObject = {
         * If jQuery is available, uses jQuery's html(), otherwise just innerHTML.
         */
         reset: function () {
-            ReplacementObject.reset(config);
+            HtmlOutputWriter.reset(config);
         },
 
         /**
@@ -667,7 +666,7 @@ var ReplacementObject = {
             actual = QUnit.jsDump.parse(actual);
             var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
 
-            var output = ReplacementObject.pushMessage(result, actual, expected, message, diff);
+            var output = HtmlOutputWriter.pushMessage(result, actual, expected, message, diff);
 
 		    QUnit.log(result, message, details);
 		
@@ -702,7 +701,7 @@ var ReplacementObject = {
 
         config.blocking = false;
 
-        ReplacementObject.setupOnWindowLoad(config);
+        HtmlOutputWriter.setupOnWindowLoad(config);
 
         if (config.autostart) {
             QUnit.start();
@@ -735,7 +734,7 @@ var ReplacementObject = {
         }
 
         //???
-        ReplacementObject.printFooter(config);
+        HtmlOutputWriter.printFooter(config);
 
         QUnit.done(config.stats.bad, config.stats.all);
     }
