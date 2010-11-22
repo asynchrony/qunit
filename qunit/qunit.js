@@ -10,15 +10,22 @@ function addEvent(elem, type, fn) {
 };
 
 var HtmlOutputWriter = {
+    printTestName: function (testName) {
+        return '<span class="test-name">' + testName + '</span>';
+    },
+
+    printModuleName: function (currentModule, name) {
+        return '<span class="module-name">' + currentModule + "</span>: " + name;
+    },
 
     pushMessage: function (result, actual, expected, message, diff) {
-        message = this.escapeHtml(message) || (result ? "okay" : "failed"); 
+        message = this.escapeHtml(message) || (result ? "okay" : "failed");
         message = '<span class="test-message">' + message + "</span>";
 
         expected = this.escapeHtml(expected);
         actual = this.escapeHtml(actual);
 
-        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';  
+        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';
         if (actual != expected) {
             output += ' result: <span class="test-actual">' + actual + '</span>, diff: ' + diff;
         }
@@ -39,7 +46,7 @@ var HtmlOutputWriter = {
     },
 
     printTestResultMessage: function (config, name, good, bad) {
-		var tests = this.id("qunit-tests");
+        var tests = this.id("qunit-tests");
 
         if (tests) {
             var ol = document.createElement("ol");
@@ -47,11 +54,11 @@ var HtmlOutputWriter = {
             for (var i = 0; i < config.assertions.length; i++) {
                 var assertion = config.assertions[i];
 
-                var li = document.createElement("li");          
+                var li = document.createElement("li");
                 li.className = assertion.result ? "pass" : "fail";
                 li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
                 ol.appendChild(li);
-            }                                                   
+            }
 
             if (bad == 0) {
                 ol.style.display = "none";
@@ -101,8 +108,6 @@ var HtmlOutputWriter = {
                 }
             }
         }
-
-        //return bad;
     },
 
     resultDisplayStyle: function (passed) {
@@ -235,7 +240,7 @@ var HtmlOutputWriter = {
     escapeMessageForOutput: function (msg) {
         return this.escapeHtml(msg);
     },
-    
+
     escapeHtml: function (s) {
         if (!s) {
             return "";
@@ -281,11 +286,11 @@ var HtmlOutputWriter = {
             config.currentModule = name;
 
             synchronize(function () {
-			if ( config.previousModule ) {
+                if (config.previousModule) {
                     QUnit.moduleDone(config.currentModule, config.moduleStats.bad, config.moduleStats.all);
                 }
 
-			config.previousModule = config.currentModule;
+                config.previousModule = config.currentModule;
                 config.currentModule = name;
                 config.moduleTestEnvironment = testEnvironment;
                 config.moduleStats = { all: 0, bad: 0 };
@@ -304,7 +309,7 @@ var HtmlOutputWriter = {
         },
 
         test: function (testName, expected, callback, async) {
-            var name = '<span class="test-name">' + testName + '</span>',testEnvironment, testEnvironmentArg;
+            var name = HtmlOutputWriter.printTestName(testName), testEnvironment, testEnvironmentArg;
 
             if (arguments.length === 2) {
                 callback = expected;
@@ -317,7 +322,7 @@ var HtmlOutputWriter = {
             }
 
             if (config.currentModule) {
-                name = '<span class="module-name">' + currentModule + "</span>: " + name;
+                name = HtmlOutputWriter.printModuleName(config.currentModule, name);
             }
 
             if (!validTest(config.currentModule + ": " + testName)) {
@@ -364,7 +369,7 @@ var HtmlOutputWriter = {
                     callback.call(testEnvironment);
                 } catch (e) {
                     fail("Test " + name + " died, exception and test follows", e, callback);
-				    QUnit.ok( false, "Died on test #" + (config.assertions.length + 1) + ": " + e.message + " - " + QUnit.jsDump.parse(e) );
+                    QUnit.ok(false, "Died on test #" + (config.assertions.length + 1) + ": " + e.message + " - " + QUnit.jsDump.parse(e));
                     // else next test will carry the responsibility
                     saveGlobal();
 
@@ -389,30 +394,30 @@ var HtmlOutputWriter = {
                     QUnit.ok(false, "Expected " + config.expected + " assertions, but " + config.assertions.length + " were run");
                 }
 
-			var good = 0, bad = 0;
+                var good = 0, bad = 0;
 
-			config.stats.all += config.assertions.length;
-			config.moduleStats.all += config.assertions.length;
+                config.stats.all += config.assertions.length;
+                config.moduleStats.all += config.assertions.length;
 
-				for ( var i = 0; i < config.assertions.length; i++ ) {
-					var assertion = config.assertions[i];
-					
-                    if ( assertion.result ) {
-						good++;
-					} else {
-						bad++;
-						config.stats.bad++;
-						config.moduleStats.bad++;
-					}
-				}
+                for (var i = 0; i < config.assertions.length; i++) {
+                    var assertion = config.assertions[i];
+
+                    if (assertion.result) {
+                        good++;
+                    } else {
+                        bad++;
+                        config.stats.bad++;
+                        config.moduleStats.bad++;
+                    }
+                }
 
                 HtmlOutputWriter.printTestResultMessage(config, testName, good, bad);
 
-			    try {
-				    QUnit.reset();
-			    } catch(e) {
-				    fail("reset() failed, following Test " + name + ", exception and reset fn follows", e, QUnit.reset);
-			    }
+                try {
+                    QUnit.reset();
+                } catch (e) {
+                    fail("reset() failed, following Test " + name + ", exception and reset fn follows", e, QUnit.reset);
+                }
 
                 QUnit.testDone(testName, bad, config.assertions.length);
 
@@ -436,14 +441,14 @@ var HtmlOutputWriter = {
         * @example ok( "asdfasdf".length > 5, "There must be at least 5 chars" );
         */
         ok: function (a, msg) {
-		a = !!a;
-		var details = {
-			result: a,
-			message: msg
-		};
-		    QUnit.log(a, HtmlOutputWriter.escapeMessageForOutput(msg), details);
+            a = !!a;
+            var details = {
+                result: a,
+                message: msg
+            };
+            QUnit.log(a, HtmlOutputWriter.escapeMessageForOutput(msg), details);
             config.assertions.push({
-			result: a,
+                result: a,
                 message: msg
             });
         },
@@ -461,27 +466,27 @@ var HtmlOutputWriter = {
         * @param String message (optional)
         */
         equal: function (actual, expected, message) {
-		    QUnit.push(expected == actual, actual, expected, message);
+            QUnit.push(expected == actual, actual, expected, message);
         },
 
         notEqual: function (actual, expected, message) {
-		    QUnit.push(expected != actual, actual, expected, message);
+            QUnit.push(expected != actual, actual, expected, message);
         },
 
         deepEqual: function (actual, expected, message) {
-		    QUnit.push(QUnit.equiv(actual, expected), actual, expected, message);
+            QUnit.push(QUnit.equiv(actual, expected), actual, expected, message);
         },
 
         notDeepEqual: function (actual, expected, message) {
-		    QUnit.push(!QUnit.equiv(actual, expected), actual, expected, message);
+            QUnit.push(!QUnit.equiv(actual, expected), actual, expected, message);
         },
 
         strictEqual: function (actual, expected, message) {
-		    QUnit.push(expected === actual, actual, expected, message);
+            QUnit.push(expected === actual, actual, expected, message);
         },
 
         notStrictEqual: function (actual, expected, message) {
-		    QUnit.push(expected !== actual, actual, expected, message);
+            QUnit.push(expected !== actual, actual, expected, message);
         },
 
         raises: function (fn, message) {
@@ -590,7 +595,6 @@ var HtmlOutputWriter = {
                 queue: []
             });
 
-            //???
             HtmlOutputWriter.clearHeaders();
         },
 
@@ -662,13 +666,13 @@ var HtmlOutputWriter = {
             return undefined;
         },
 
-        push: function(result, actual, expected, message) {
-		    var details = {
-			    result: result,
-			    message: message,
-			    actual: actual,
-			    expected: expected
-		    };
+        push: function (result, actual, expected, message) {
+            var details = {
+                result: result,
+                message: message,
+                actual: actual,
+                expected: expected
+            };
 
             expected = QUnit.jsDump.parse(expected);
             actual = QUnit.jsDump.parse(actual);
@@ -676,12 +680,12 @@ var HtmlOutputWriter = {
 
             var output = HtmlOutputWriter.pushMessage(result, actual, expected, message, diff);
 
-		    QUnit.log(result, output, details);
-		
-		    config.assertions.push({
-			    result: !!result,
-			    message: output
-		    });
+            QUnit.log(result, output, details);
+
+            config.assertions.push({
+                result: !!result,
+                message: output
+            });
         },
 
         // Logging callbacks
@@ -741,7 +745,6 @@ var HtmlOutputWriter = {
             QUnit.moduleDone(config.currentModule, config.moduleStats.bad, config.moduleStats.all);
         }
 
-        //???
         HtmlOutputWriter.printFooter(config);
 
         QUnit.done(config.stats.bad, config.stats.all);
@@ -1349,7 +1352,7 @@ var HtmlOutputWriter = {
             }
 
             return str;
-	};
+        };
     })();
 
 })(this);
