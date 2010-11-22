@@ -48,12 +48,8 @@ var HtmlOutputWriter = {
         }
     },
 
-    printTestResultMessage: function (config, name) {
-        var good = 0, bad = 0,
-			tests = this.id("qunit-tests");
-
-        config.stats.all += config.assertions.length;       //--Seems like business logic
-        config.moduleStats.all += config.assertions.length;
+    printTestResultMessage: function (config, name, good, bad) {
+		var tests = this.id("qunit-tests");
 
         if (tests) {
             var ol = document.createElement("ol");
@@ -61,19 +57,11 @@ var HtmlOutputWriter = {
             for (var i = 0; i < config.assertions.length; i++) {
                 var assertion = config.assertions[i];
 
-                var li = document.createElement("li");          //--This should probably come out -- Begin
+                var li = document.createElement("li");          
                 li.className = assertion.result ? "pass" : "fail";
                 li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
                 ol.appendChild(li);
-
-                if (assertion.result) {
-                    good++;
-                } else {
-                    bad++;
-                    config.stats.bad++;
-                    config.moduleStats.bad++;
-                }
-            }                                                   //--This should probably come out -- End
+            }                                                   
 
             if (bad == 0) {
                 ol.style.display = "none";
@@ -124,7 +112,7 @@ var HtmlOutputWriter = {
             }
         }
 
-        return bad;
+        //return bad;
     },
 
     resultDisplayStyle: function (passed) {
@@ -257,8 +245,7 @@ var HtmlOutputWriter = {
     escapeMessageForOutput: function (msg) {
         return this.escapeHtml(msg);
     },
-
-
+    
     escapeHtml: function (s) {
         if (!s) {
             return "";
@@ -412,7 +399,24 @@ var HtmlOutputWriter = {
                     QUnit.ok(false, "Expected " + config.expected + " assertions, but " + config.assertions.length + " were run");
                 }
 
-                var bad = HtmlOutputWriter.printTestResultMessage(config, name);
+			var good = 0, bad = 0;
+
+			config.stats.all += config.assertions.length;
+			config.moduleStats.all += config.assertions.length;
+
+				for ( var i = 0; i < config.assertions.length; i++ ) {
+					var assertion = config.assertions[i];
+					
+                    if ( assertion.result ) {
+						good++;
+					} else {
+						bad++;
+						config.stats.bad++;
+						config.moduleStats.bad++;
+					}
+				}
+
+                HtmlOutputWriter.printTestResultMessage(config, testName, good, bad);
 
 			    try {
 				    QUnit.reset();
