@@ -1,5 +1,4 @@
 
-
 function addEvent(elem, type, fn) {
     if (elem.addEventListener) {
         elem.addEventListener(type, fn, false);
@@ -10,25 +9,16 @@ function addEvent(elem, type, fn) {
     }
 };
 
-
-
 var HtmlOutputWriter = {
-    printTestName: function (testName) {
-        return '<span class="test-name">' + testName + '</span>';
-    },
-
-    printModuleName: function (currentModule, name) {
-        return '<span class="module-name">' + currentModule + "</span>: " + name;
-    },
 
     pushMessage: function (result, actual, expected, message, diff) {
-        message = this.escapeHtml(message) || (result ? "okay" : "failed"); //--Does this need to come out?
+        message = this.escapeHtml(message) || (result ? "okay" : "failed"); 
         message = '<span class="test-message">' + message + "</span>";
 
         expected = this.escapeHtml(expected);
         actual = this.escapeHtml(actual);
 
-        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';  //--Do we care about part of the format?
+        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';  
         if (actual != expected) {
             output += ' result: <span class="test-actual">' + actual + '</span>, diff: ' + diff;
         }
@@ -227,7 +217,7 @@ var HtmlOutputWriter = {
 
         var main = this.id('main') || this.id('qunit-fixture');
         if (main) {
-            config.fixture = main.innerHTML;
+            config.fixture = main.innerHTML;  //-- Is this business logic that needs to go back into qUnit
         }
     },
 
@@ -314,7 +304,7 @@ var HtmlOutputWriter = {
         },
 
         test: function (testName, expected, callback, async) {
-            var name = HtmlOutputWriter.printTestName(testName),testEnvironment, testEnvironmentArg;
+            var name = '<span class="test-name">' + testName + '</span>',testEnvironment, testEnvironmentArg;
 
             if (arguments.length === 2) {
                 callback = expected;
@@ -327,7 +317,7 @@ var HtmlOutputWriter = {
             }
 
             if (config.currentModule) {
-                name = HtmlOutputWriter.printModuleName(config.currentModule, name);
+                name = '<span class="module-name">' + currentModule + "</span>: " + name;
             }
 
             if (!validTest(config.currentModule + ": " + testName)) {
