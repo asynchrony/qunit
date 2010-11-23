@@ -1,272 +1,3 @@
-
-function addEvent(elem, type, fn) {
-    if (elem.addEventListener) {
-        elem.addEventListener(type, fn, false);
-    } else if (elem.attachEvent) {
-        elem.attachEvent("on" + type, fn);
-    } else {
-        fn();
-    }
-};
-
-var HtmlOutputWriter = {
-    formatTestName: function (testName) {
-        return '<span class="test-name">' + testName + '</span>';
-    },
-
-    formatModuleName: function (currentModule, name) {
-        return '<span class="module-name">' + currentModule + "</span>: " + name;
-    },
-
-    pushMessage: function (result, actual, expected, message, diff) {
-        message = this.escapeHtml(message) || (result ? "okay" : "failed");
-        message = '<span class="test-message">' + message + "</span>";
-
-        expected = this.escapeHtml(expected);
-        actual = this.escapeHtml(actual);
-
-        var output = message + ', expected: <span class="test-expected">' + expected + '</span>';
-        if (actual != expected) {
-            output += ' result: <span class="test-actual">' + actual + '</span>, diff: ' + diff;
-        }
-
-        return output;
-    },
-
-    printTestRunningMessage: function (name) {
-        var tests = this.id("qunit-tests");
-        if (tests) {
-            var b = document.createElement("strong");
-            b.innerHTML = "Running " + name;
-            var li = document.createElement("li");
-            li.appendChild(b);
-            li.id = "current-test-output";
-            tests.appendChild(li)
-        }
-    },
-
-    printTestResultMessage: function (config, name, good, bad) {
-        var tests = this.id("qunit-tests");
-
-        if (tests) {
-            var ol = document.createElement("ol");
-
-            for (var i = 0; i < config.assertions.length; i++) {
-                var assertion = config.assertions[i];
-
-                var li = document.createElement("li");
-                li.className = assertion.result ? "pass" : "fail";
-                li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
-                ol.appendChild(li);
-            }
-
-            if (bad == 0) {
-                ol.style.display = "none";
-            }
-
-            var b = document.createElement("strong");
-            b.innerHTML = name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + config.assertions.length + ")</b>";
-
-            addEvent(b, "click", function () {
-                var next = b.nextSibling, display = next.style.display;
-                next.style.display = display === "none" ? "block" : "none";
-            });
-
-            addEvent(b, "dblclick", function (e) {
-                var target = e && e.target ? e.target : window.event.srcElement;
-                if (target.nodeName.toLowerCase() == "span" || target.nodeName.toLowerCase() == "b") {
-                    target = target.parentNode;
-                }
-                if (window.location && target.nodeName.toLowerCase() === "strong") {
-                    window.location.search = "?" + encodeURIComponent(getText([target]).replace(/\(.+\)$/, "").replace(/(^\s*|\s*$)/g, ""));
-                }
-            });
-
-            var li = this.id("current-test-output");
-            li.id = "";
-            li.className = bad ? "fail" : "pass";
-            li.style.display = HtmlOutputWriter.resultDisplayStyle(!bad);
-            li.removeChild(li.firstChild);
-            li.appendChild(b);
-            li.appendChild(ol);
-
-            if (bad) {
-                var toolbar = this.id("qunit-testrunner-toolbar");
-                if (toolbar) {
-                    toolbar.style.display = "block";
-                    this.id("qunit-filter-pass").disabled = null;
-                    this.id("qunit-filter-missing").disabled = null;
-                }
-            }
-
-        } else {
-            for (var i = 0; i < config.assertions.length; i++) {
-                if (!config.assertions[i].result) {
-                    bad++;
-                    config.stats.bad++;
-                    config.moduleStats.bad++;
-                }
-            }
-        }
-    },
-
-    resultDisplayStyle: function (passed) {
-        return passed && this.id("qunit-filter-pass") && this.id("qunit-filter-pass").checked ? 'none' : '';
-    },
-
-    clearHeaders: function () {
-        var tests = this.id("qunit-tests"),
-			banner = this.id("qunit-banner"),
-			result = this.id("qunit-testresult");
-
-        if (tests) {
-            tests.innerHTML = "";
-        }
-
-        if (banner) {
-            banner.className = "";
-        }
-
-        if (result) {
-            result.parentNode.removeChild(result);
-        }
-    },
-
-    printFooter: function (config) {
-        var banner = this.id("qunit-banner"),
-		tests = this.id("qunit-tests"),
-
-        html = ['Tests completed in ',
-		+new Date - config.started, ' milliseconds.<br/>',
-		'<span class="passed">', config.stats.all - config.stats.bad, '</span> tests of <span class="total">', config.stats.all, '</span> passed, <span class="failed">', config.stats.bad, '</span> failed.'].join('');
-
-        if (banner) {
-            banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
-        }
-
-        if (tests) {
-            var result = this.id("qunit-testresult");
-
-            if (!result) {
-                result = document.createElement("p");
-                result.id = "qunit-testresult";
-                result.className = "result";
-                tests.parentNode.insertBefore(result, tests.nextSibling);
-            }
-
-            result.innerHTML = html;
-        }
-    },
-
-    setupOnWindowLoad: function (config) {
-        var userAgent = this.id("qunit-userAgent");
-        if (userAgent) {
-            userAgent.innerHTML = navigator.userAgent;
-        }
-        var banner = this.id("qunit-header");
-        if (banner) {
-            var paramsIndex = location.href.lastIndexOf(location.search);
-            if (paramsIndex > -1) {
-                var mainPageLocation = location.href.slice(0, paramsIndex);
-                if (mainPageLocation == location.href) {
-                    banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
-                } else {
-                    var testName = decodeURIComponent(location.search.slice(1));
-                    banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
-                }
-            }
-        }
-
-        var toolbar = this.id("qunit-testrunner-toolbar");
-        if (toolbar) {
-            toolbar.style.display = "none";
-
-            var filter = document.createElement("input");
-            filter.type = "checkbox";
-            filter.id = "qunit-filter-pass";
-            filter.disabled = true;
-            addEvent(filter, "click", function () {
-                var li = document.getElementsByTagName("li");
-                for (var i = 0; i < li.length; i++) {
-                    if (li[i].className.indexOf("pass") > -1) {
-                        li[i].style.display = filter.checked ? "none" : "";
-                    }
-                }
-            });
-            toolbar.appendChild(filter);
-
-            var label = document.createElement("label");
-            label.setAttribute("for", "qunit-filter-pass");
-            label.innerHTML = "Hide passed tests";
-            toolbar.appendChild(label);
-
-            var missing = document.createElement("input");
-            missing.type = "checkbox";
-            missing.id = "qunit-filter-missing";
-            missing.disabled = true;
-            addEvent(missing, "click", function () {
-                var li = document.getElementsByTagName("li");
-                for (var i = 0; i < li.length; i++) {
-                    if (li[i].className.indexOf("fail") > -1 && li[i].innerHTML.indexOf('missing test - untested code is broken code') > -1) {
-                        li[i].parentNode.parentNode.style.display = missing.checked ? "none" : "block";
-                    }
-                }
-            });
-            toolbar.appendChild(missing);
-
-            label = document.createElement("label");
-            label.setAttribute("for", "qunit-filter-missing");
-            label.innerHTML = "Hide missing tests (untested code is broken code)";
-            toolbar.appendChild(label);
-        }
-
-        var main = this.id('main') || this.id('qunit-fixture');
-        if (main) {
-            config.fixture = main.innerHTML;  //-- Is this business logic that needs to go back into qUnit
-        }
-    },
-
-    reset: function (config) {
-        if (window.jQuery) {
-            jQuery("#main, #qunit-fixture").html(config.fixture);
-        } else {
-            var main = this.id('main') || this.id('qunit-fixture');
-            if (main) {
-                main.innerHTML = config.fixture;
-            }
-        }
-    },
-
-    escapeMessageForOutput: function (msg) {
-        return this.escapeHtml(msg);
-    },
-
-    escapeHtml: function (s) {
-        if (!s) {
-            return "";
-        }
-
-        s = s + "";
-        return s.replace(/[\&"<>\\]/g, function (s) {
-            switch (s) {
-                case "&": return "&amp;";
-                case "\\": return "\\\\";
-                case '"': return '\"';
-                case "<": return "&lt;";
-                case ">": return "&gt;";
-                default: return s;
-            }
-        });
-    },
-
-    id: function (name) {
-        return !!(typeof document !== "undefined" && document && document.getElementById) &&
-	    document.getElementById(name);
-    }
-
-};
-
-
 /*
 * QUnit - A JavaScript Unit Testing Framework
 * 
@@ -861,6 +592,16 @@ var HtmlOutputWriter = {
         return a;
     }
 
+    function addEvent(elem, type, fn) {
+        if (elem.addEventListener) {
+            elem.addEventListener(type, fn, false);
+        } else if (elem.attachEvent) {
+            elem.attachEvent("on" + type, fn);
+        } else {
+            fn();
+        }
+    };
+
     // Test for equality any JavaScript type.
     // Discussions and reference: http://philrathe.com/articles/equiv
     // Test suites: http://philrathe.com/tests/equiv
@@ -1354,5 +1095,263 @@ var HtmlOutputWriter = {
             return str;
         };
     })();
+
+    // Object to encapsulate all the code responsible for the output of hte test results
+    var HtmlOutputWriter = {
+        formatTestName: function (testName) {
+            return '<span class="test-name">' + testName + '</span>';
+        },
+
+        formatModuleName: function (currentModule, name) {
+            return '<span class="module-name">' + currentModule + "</span>: " + name;
+        },
+
+        pushMessage: function (result, actual, expected, message, diff) {
+            message = this.escapeHtml(message) || (result ? "okay" : "failed");
+            message = '<span class="test-message">' + message + "</span>";
+
+            expected = this.escapeHtml(expected);
+            actual = this.escapeHtml(actual);
+
+            var output = message + ', expected: <span class="test-expected">' + expected + '</span>';
+            if (actual != expected) {
+                output += ' result: <span class="test-actual">' + actual + '</span>, diff: ' + diff;
+            }
+
+            return output;
+        },
+
+        printTestRunningMessage: function (name) {
+            var tests = this.id("qunit-tests");
+            if (tests) {
+                var b = document.createElement("strong");
+                b.innerHTML = "Running " + name;
+                var li = document.createElement("li");
+                li.appendChild(b);
+                li.id = "current-test-output";
+                tests.appendChild(li)
+            }
+        },
+
+        printTestResultMessage: function (config, name, good, bad) {
+            var tests = this.id("qunit-tests");
+
+            if (tests) {
+                var ol = document.createElement("ol");
+
+                for (var i = 0; i < config.assertions.length; i++) {
+                    var assertion = config.assertions[i];
+
+                    var li = document.createElement("li");
+                    li.className = assertion.result ? "pass" : "fail";
+                    li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
+                    ol.appendChild(li);
+                }
+
+                if (bad == 0) {
+                    ol.style.display = "none";
+                }
+
+                var b = document.createElement("strong");
+                b.innerHTML = name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + config.assertions.length + ")</b>";
+
+                addEvent(b, "click", function () {
+                    var next = b.nextSibling, display = next.style.display;
+                    next.style.display = display === "none" ? "block" : "none";
+                });
+
+                addEvent(b, "dblclick", function (e) {
+                    var target = e && e.target ? e.target : window.event.srcElement;
+                    if (target.nodeName.toLowerCase() == "span" || target.nodeName.toLowerCase() == "b") {
+                        target = target.parentNode;
+                    }
+                    if (window.location && target.nodeName.toLowerCase() === "strong") {
+                        window.location.search = "?" + encodeURIComponent(getText([target]).replace(/\(.+\)$/, "").replace(/(^\s*|\s*$)/g, ""));
+                    }
+                });
+
+                var li = this.id("current-test-output");
+                li.id = "";
+                li.className = bad ? "fail" : "pass";
+                li.style.display = HtmlOutputWriter.resultDisplayStyle(!bad);
+                li.removeChild(li.firstChild);
+                li.appendChild(b);
+                li.appendChild(ol);
+
+                if (bad) {
+                    var toolbar = this.id("qunit-testrunner-toolbar");
+                    if (toolbar) {
+                        toolbar.style.display = "block";
+                        this.id("qunit-filter-pass").disabled = null;
+                        this.id("qunit-filter-missing").disabled = null;
+                    }
+                }
+
+            } else {
+                for (var i = 0; i < config.assertions.length; i++) {
+                    if (!config.assertions[i].result) {
+                        bad++;
+                        config.stats.bad++;
+                        config.moduleStats.bad++;
+                    }
+                }
+            }
+        },
+
+        resultDisplayStyle: function (passed) {
+            return passed && this.id("qunit-filter-pass") && this.id("qunit-filter-pass").checked ? 'none' : '';
+        },
+
+        clearHeaders: function () {
+            var tests = this.id("qunit-tests"),
+			    banner = this.id("qunit-banner"),
+			    result = this.id("qunit-testresult");
+
+            if (tests) {
+                tests.innerHTML = "";
+            }
+
+            if (banner) {
+                banner.className = "";
+            }
+
+            if (result) {
+                result.parentNode.removeChild(result);
+            }
+        },
+
+        printFooter: function (config) {
+            var banner = this.id("qunit-banner"),
+		    tests = this.id("qunit-tests"),
+
+            html = ['Tests completed in ',
+		    +new Date - config.started, ' milliseconds.<br/>',
+		    '<span class="passed">', config.stats.all - config.stats.bad, '</span> tests of <span class="total">', config.stats.all, '</span> passed, <span class="failed">', config.stats.bad, '</span> failed.'].join('');
+
+            if (banner) {
+                banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
+            }
+
+            if (tests) {
+                var result = this.id("qunit-testresult");
+
+                if (!result) {
+                    result = document.createElement("p");
+                    result.id = "qunit-testresult";
+                    result.className = "result";
+                    tests.parentNode.insertBefore(result, tests.nextSibling);
+                }
+
+                result.innerHTML = html;
+            }
+        },
+
+        setupOnWindowLoad: function (config) {
+            var userAgent = this.id("qunit-userAgent");
+            if (userAgent) {
+                userAgent.innerHTML = navigator.userAgent;
+            }
+            var banner = this.id("qunit-header");
+            if (banner) {
+                var paramsIndex = location.href.lastIndexOf(location.search);
+                if (paramsIndex > -1) {
+                    var mainPageLocation = location.href.slice(0, paramsIndex);
+                    if (mainPageLocation == location.href) {
+                        banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
+                    } else {
+                        var testName = decodeURIComponent(location.search.slice(1));
+                        banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
+                    }
+                }
+            }
+
+            var toolbar = this.id("qunit-testrunner-toolbar");
+            if (toolbar) {
+                toolbar.style.display = "none";
+
+                var filter = document.createElement("input");
+                filter.type = "checkbox";
+                filter.id = "qunit-filter-pass";
+                filter.disabled = true;
+                addEvent(filter, "click", function () {
+                    var li = document.getElementsByTagName("li");
+                    for (var i = 0; i < li.length; i++) {
+                        if (li[i].className.indexOf("pass") > -1) {
+                            li[i].style.display = filter.checked ? "none" : "";
+                        }
+                    }
+                });
+                toolbar.appendChild(filter);
+
+                var label = document.createElement("label");
+                label.setAttribute("for", "qunit-filter-pass");
+                label.innerHTML = "Hide passed tests";
+                toolbar.appendChild(label);
+
+                var missing = document.createElement("input");
+                missing.type = "checkbox";
+                missing.id = "qunit-filter-missing";
+                missing.disabled = true;
+                addEvent(missing, "click", function () {
+                    var li = document.getElementsByTagName("li");
+                    for (var i = 0; i < li.length; i++) {
+                        if (li[i].className.indexOf("fail") > -1 && li[i].innerHTML.indexOf('missing test - untested code is broken code') > -1) {
+                            li[i].parentNode.parentNode.style.display = missing.checked ? "none" : "block";
+                        }
+                    }
+                });
+                toolbar.appendChild(missing);
+
+                label = document.createElement("label");
+                label.setAttribute("for", "qunit-filter-missing");
+                label.innerHTML = "Hide missing tests (untested code is broken code)";
+                toolbar.appendChild(label);
+            }
+
+            var main = this.id('main') || this.id('qunit-fixture');
+            if (main) {
+                config.fixture = main.innerHTML;  //-- Is this business logic that needs to go back into qUnit
+            }
+        },
+
+        reset: function (config) {
+            if (window.jQuery) {
+                jQuery("#main, #qunit-fixture").html(config.fixture);
+            } else {
+                var main = this.id('main') || this.id('qunit-fixture');
+                if (main) {
+                    main.innerHTML = config.fixture;
+                }
+            }
+        },
+
+        escapeMessageForOutput: function (msg) {
+            return this.escapeHtml(msg);
+        },
+
+        escapeHtml: function (s) {
+            if (!s) {
+                return "";
+            }
+
+            s = s + "";
+            return s.replace(/[\&"<>\\]/g, function (s) {
+                switch (s) {
+                    case "&": return "&amp;";
+                    case "\\": return "\\\\";
+                    case '"': return '\"';
+                    case "<": return "&lt;";
+                    case ">": return "&gt;";
+                    default: return s;
+                }
+            });
+        },
+
+        id: function (name) {
+            return !!(typeof document !== "undefined" && document && document.getElementById) &&
+	        document.getElementById(name);
+        }
+
+    };
 
 })(this);
