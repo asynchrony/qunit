@@ -10,11 +10,11 @@ function addEvent(elem, type, fn) {
 };
 
 var HtmlOutputWriter = {
-    printTestName: function (testName) {
+    formatTestName: function (testName) {
         return '<span class="test-name">' + testName + '</span>';
     },
 
-    printModuleName: function (currentModule, name) {
+    formatModuleName: function (currentModule, name) {
         return '<span class="module-name">' + currentModule + "</span>: " + name;
     },
 
@@ -309,7 +309,7 @@ var HtmlOutputWriter = {
         },
 
         test: function (testName, expected, callback, async) {
-            var name = HtmlOutputWriter.printTestName(testName), testEnvironment, testEnvironmentArg;
+            var name = HtmlOutputWriter.formatTestName(testName), testEnvironment, testEnvironmentArg;
 
             if (arguments.length === 2) {
                 callback = expected;
@@ -322,7 +322,7 @@ var HtmlOutputWriter = {
             }
 
             if (config.currentModule) {
-                name = HtmlOutputWriter.printModuleName(config.currentModule, name);
+                name = HtmlOutputWriter.formatModuleName(config.currentModule, name);
             }
 
             if (!validTest(config.currentModule + ": " + testName)) {
