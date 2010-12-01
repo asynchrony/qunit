@@ -19,6 +19,23 @@
 
         formatModuleName: function (currentModule, name) {
             return '<span class="module-name">' + currentModule + "</span>: " + name;
+        },
+
+        printTestRunningMessage: function (name) {
+            var tests = this.id("qunit-tests");
+            if (tests) {
+                var b = document.createElement("strong");
+                b.innerHTML = "Running " + name;
+                var li = document.createElement("li");
+                li.appendChild(b);
+                li.id = "current-test-output";
+                tests.appendChild(li)
+            }
+        },
+
+        id: function (name) {
+            return !!(typeof document !== "undefined" && document && document.getElementById) &&
+	        document.getElementById(name);
         }
 };
 var defined = {
@@ -93,15 +110,7 @@ var QUnit = {
 			config.assertions = [];
 			config.expected = expected;
 			
-			var tests = id("qunit-tests");
-			if (tests) {
-				var b = document.createElement("strong");
-					b.innerHTML = "Running " + name;
-				var li = document.createElement("li");
-					li.appendChild( b );
-					li.id = "current-test-output";
-				tests.appendChild( li );
-			}
+            HtmlOutputWriter.printTestRunningMessage(name);
 
 			try {
 				if ( !config.pollution ) {
