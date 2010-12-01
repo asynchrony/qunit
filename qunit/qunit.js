@@ -101,6 +101,57 @@
                 result.innerHTML = html;
             }
         },
+
+        setupOnWindowLoad: function (config) {
+            var userAgent = this.id("qunit-userAgent");
+            if (userAgent) {
+                userAgent.innerHTML = navigator.userAgent;
+            }
+            var banner = this.id("qunit-header");
+            if (banner) {
+                var paramsIndex = location.href.lastIndexOf(location.search);
+                if (paramsIndex > -1) {
+                    var mainPageLocation = location.href.slice(0, paramsIndex);
+                    if (mainPageLocation == location.href) {
+                        banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
+                    } else {
+                        var testName = decodeURIComponent(location.search.slice(1));
+                        banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
+                    }
+                }
+            }
+
+            var toolbar = this.id("qunit-testrunner-toolbar");
+            if (toolbar) {
+                toolbar.style.display = "none";
+
+                var filter = document.createElement("input");
+                filter.type = "checkbox";
+                filter.id = "qunit-filter-pass";
+                filter.disabled = true;
+                addEvent(filter, "click", function () {
+                    var li = document.getElementsByTagName("li");
+                    for (var i = 0; i < li.length; i++) {
+                        if (li[i].className.indexOf("pass") > -1) {
+                            li[i].style.display = filter.checked ? "none" : "";
+                        }
+                    }
+                });
+                toolbar.appendChild(filter);
+
+                var label = document.createElement("label");
+                label.setAttribute("for", "qunit-filter-pass");
+                label.innerHTML = "Hide passed tests";
+                toolbar.appendChild(label);
+
+            }
+
+            var main = this.id('main') || this.id('qunit-fixture');
+            if (main) {
+                config.fixture = main.innerHTML;  //-- Is this business logic that needs to go back into qUnit
+            }
+        },
+
         reset: function (config) {
             if (window.jQuery) {
                 jQuery("#main, #qunit-fixture").html(config.fixture);
@@ -628,52 +679,7 @@ addEvent(window, "load", function() {
 
 	config.blocking = false;
 
-	var userAgent = id("qunit-userAgent");
-	if ( userAgent ) {
-		userAgent.innerHTML = navigator.userAgent;
-	}
-	var banner = id("qunit-header");
-	if ( banner ) {
-		var paramsIndex = location.href.lastIndexOf(location.search);
-		if ( paramsIndex > -1 ) {
-			var mainPageLocation = location.href.slice(0, paramsIndex);
-			if ( mainPageLocation == location.href ) {
-				banner.innerHTML = '<a href=""> ' + banner.innerHTML + '</a> ';
-			} else {
-				var testName = decodeURIComponent(location.search.slice(1));
-				banner.innerHTML = '<a href="' + mainPageLocation + '">' + banner.innerHTML + '</a> &#8250; <a href="">' + testName + '</a>';
-			}
-		}
-	}
-	
-	var toolbar = id("qunit-testrunner-toolbar");
-	if ( toolbar ) {
-		toolbar.style.display = "none";
-		
-		var filter = document.createElement("input");
-		filter.type = "checkbox";
-		filter.id = "qunit-filter-pass";
-		filter.disabled = true;
-		addEvent( filter, "click", function() {
-			var li = document.getElementsByTagName("li");
-			for ( var i = 0; i < li.length; i++ ) {
-				if ( li[i].className.indexOf("pass") > -1 ) {
-					li[i].style.display = filter.checked ? "none" : "";
-				}
-			}
-		});
-		toolbar.appendChild( filter );
-
-		var label = document.createElement("label");
-		label.setAttribute("for", "qunit-filter-pass");
-		label.innerHTML = "Hide passed tests";
-		toolbar.appendChild( label );
-	}
-
-	var main = id('main') || id('qunit-fixture');
-	if ( main ) {
-		config.fixture = main.innerHTML;
-	}
+    HtmlOutputWriter.setupOnWindowLoad(config);
 
 	if (config.autostart) {
 		QUnit.start();
