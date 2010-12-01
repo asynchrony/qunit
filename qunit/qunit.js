@@ -10,6 +10,17 @@
 
 (function(window) {
 
+    // Object to encapsulate all the code responsible for the output of hte test results
+    var HtmlOutputWriter = {
+
+        formatTestName: function (testName) {
+            return '<span class="test-name">' + testName + '</span>';
+        },
+
+        formatModuleName: function (currentModule, name) {
+            return '<span class="module-name">' + currentModule + "</span>: " + name;
+        }
+};
 var defined = {
     setTimeout: typeof window.setTimeout !== "undefined"
 }
@@ -44,7 +55,7 @@ var QUnit = {
 	},
 	
 	test: function(testName, expected, callback, async) {
-		var name = '<span class="test-name">' + testName + '</span>', testEnvironment, testEnvironmentArg;
+            var name = HtmlOutputWriter.formatTestName(testName), testEnvironment, testEnvironmentArg;
 
 		if ( arguments.length === 2 ) {
 			callback = expected;
@@ -57,7 +68,7 @@ var QUnit = {
 		}
 
 		if ( config.currentModule ) {
-			name = '<span class="module-name">' + config.currentModule + "</span>: " + name;
+                name = HtmlOutputWriter.formatModuleName(config.currentModule, name);
 		}
 
 		if ( !validTest(config.currentModule + ": " + testName) ) {
