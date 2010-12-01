@@ -21,6 +21,30 @@
             return '<span class="module-name">' + currentModule + "</span>: " + name;
         },
 
+        pushMessage: function (result, actual, expected, message, diff, source) {
+            message = this.escapeHtml(message) || (result ? "okay" : "failed");
+            message = '<span class="test-message">' + message + "</span>";
+
+            expected = this.escapeHtml(expected);
+            actual = this.escapeHtml(actual);
+	
+			var output = message + '<table><tr class="test-expected"><th>Expected: </th><td><pre>' + expected + '</pre></td></tr>';
+			if (actual != expected) {
+				output += '<tr class="test-actual"><th>Result: </th><td><pre>' + actual + '</pre></td></tr>';
+				output += '<tr class="test-diff"><th>Diff: </th><td><pre>' + QUnit.diff(expected, actual) +'</pre></td></tr>';
+			}
+
+			if (!result) {
+				if (source) {
+					details.source = source;
+					output += '<tr class="test-source"><th>Source: </th><td><pre>' + source +'</pre></td></tr>';
+				}
+			}
+			output += "</table>";
+
+            return output;
+        },
+
         printTestRunningMessage: function (name) {
             var tests = this.id("qunit-tests");
             if (tests) {
@@ -115,6 +139,7 @@
 	        document.getElementById(name);
         }
 };
+
 var defined = {
     setTimeout: typeof window.setTimeout !== "undefined"
 }
@@ -564,25 +589,13 @@ extend(QUnit, {
 			expected: expected
 		};
 		
-		message = escapeHtml(message) || (result ? "okay" : "failed");
-		message = '<span class="test-message">' + message + "</span>";
-		expected = escapeHtml(QUnit.jsDump.parse(expected));
-		actual = escapeHtml(QUnit.jsDump.parse(actual));
-		var output = message + '<table><tr class="test-expected"><th>Expected: </th><td><pre>' + expected + '</pre></td></tr>';
-		if (actual != expected) {
-			output += '<tr class="test-actual"><th>Result: </th><td><pre>' + actual + '</pre></td></tr>';
-			output += '<tr class="test-diff"><th>Diff: </th><td><pre>' + QUnit.diff(expected, actual) +'</pre></td></tr>';
-		}
-		if (!result) {
-			var source = sourceFromStacktrace();
-			if (source) {
-				details.source = source;
-				output += '<tr class="test-source"><th>Source: </th><td><pre>' + source +'</pre></td></tr>';
-			}
-		}
-		output += "</table>";
-		
-		QUnit.log(result, message, details);
+        expected = QUnit.jsDump.parse(expected);
+        actual = QUnit.jsDump.parse(actual);
+        var diff = (actual != expected) ? QUnit.diff(expected, actual) : '';
+
+        var output = HtmlOutputWriter.pushMessage(result, actual, expected, message, diff, sourceFromStacktrace());
+	
+		QUnit.log(result, output, details);
 		
 		config.assertions.push({
 			result: !!result,
@@ -604,6 +617,7 @@ if ( typeof document === "undefined" || document.readyState === "complete" ) {
 	config.autorun = true;
 }
 
+    // Only instance of addEvent outside of Output writing
 addEvent(window, "load", function() {
 	QUnit.begin();
 	
