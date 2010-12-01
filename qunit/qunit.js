@@ -52,6 +52,31 @@
             }
         },
 
+ 		printFooter: function (config) {
+            var banner = this.id("qunit-banner"),
+		    tests = this.id("qunit-tests"),
+
+            html = ['Tests completed in ',
+		    +new Date - config.started, ' milliseconds.<br/>',
+		    '<span class="passed">', config.stats.all - config.stats.bad, '</span> tests of <span class="total">', config.stats.all, '</span> passed, <span class="failed">', config.stats.bad, '</span> failed.'].join('');
+
+            if (banner) {
+                banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
+            }
+
+            if (tests) {
+                var result = this.id("qunit-testresult");
+
+                if (!result) {
+                    result = document.createElement("p");
+                    result.id = "qunit-testresult";
+                    result.className = "result";
+                    tests.parentNode.insertBefore(result, tests.nextSibling);
+                }
+
+                result.innerHTML = html;
+            }
+        },
         reset: function (config) {
             if (window.jQuery) {
                 jQuery("#main, #qunit-fixture").html(config.fixture);
@@ -668,28 +693,7 @@ function done() {
 		QUnit.moduleDone( config.currentModule, config.moduleStats.bad, config.moduleStats.all );
 	}
 
-	var banner = id("qunit-banner"),
-		tests = id("qunit-tests"),
-		html = ['Tests completed in ',
-		+new Date - config.started, ' milliseconds.<br/>',
-		'<span class="passed">', config.stats.all - config.stats.bad, '</span> tests of <span class="total">', config.stats.all, '</span> passed, <span class="failed">', config.stats.bad,'</span> failed.'].join('');
-
-	if ( banner ) {
-		banner.className = (config.stats.bad ? "qunit-fail" : "qunit-pass");
-	}
-
-	if ( tests ) {	
-		var result = id("qunit-testresult");
-
-		if ( !result ) {
-			result = document.createElement("p");
-			result.id = "qunit-testresult";
-			result.className = "result";
-			tests.parentNode.insertBefore( result, tests.nextSibling );
-		}
-
-		result.innerHTML = html;
-	}
+    HtmlOutputWriter.printFooter(config);
 
 	QUnit.done( config.stats.bad, config.stats.all );
 }
