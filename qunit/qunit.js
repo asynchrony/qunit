@@ -57,6 +57,72 @@
             }
         },
 
+        printTestResultMessage: function (config, name, good, bad) {
+            var tests = this.id("qunit-tests");
+
+            if (tests) {
+                var ol = document.createElement("ol");
+
+                for (var i = 0; i < config.assertions.length; i++) {
+                    var assertion = config.assertions[i];
+
+                    var li = document.createElement("li");
+                    li.className = assertion.result ? "pass" : "fail";
+                    li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
+                    ol.appendChild(li);
+                }
+                if (bad == 0) {
+                    ol.style.display = "none";
+                }
+
+                var b = document.createElement("strong");
+                b.innerHTML = name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + config.assertions.length + ")</b>";
+
+                addEvent(b, "click", function () {
+                    var next = b.nextSibling, display = next.style.display;
+                    next.style.display = display === "none" ? "block" : "none";
+                });
+
+                addEvent(b, "dblclick", function (e) {
+                    var target = e && e.target ? e.target : window.event.srcElement;
+                    if (target.nodeName.toLowerCase() == "span" || target.nodeName.toLowerCase() == "b") {
+                        target = target.parentNode;
+                    }
+                    if (window.location && target.nodeName.toLowerCase() === "strong") {
+                        window.location.search = "?" + encodeURIComponent(getText([target]).replace(/\(.+\)$/, "").replace(/(^\s*|\s*$)/g, ""));
+                    }
+                });
+
+                var li = this.id("current-test-output");
+                li.id = "";
+                li.className = bad ? "fail" : "pass";
+                li.style.display = HtmlOutputWriter.resultDisplayStyle(!bad);
+                li.removeChild(li.firstChild);
+                li.appendChild(b);
+                li.appendChild(ol);
+
+                if (bad) {
+                    var toolbar = this.id("qunit-testrunner-toolbar");
+                    if (toolbar) {
+                        toolbar.style.display = "block";
+                        this.id("qunit-filter-pass").disabled = null;
+                    }
+                }
+
+            } else {
+                for (var i = 0; i < config.assertions.length; i++) {
+                    if (!config.assertions[i].result) {
+                        bad++;
+                        config.stats.bad++;
+                        config.moduleStats.bad++;
+                    }
+                }
+            }
+        },
+
+        resultDisplayStyle: function (passed) {
+            return passed && this.id("qunit-filter-pass") && this.id("qunit-filter-pass").checked ? 'none' : '';
+        },
 
         clearHeaders: function () {
             var tests = this.id("qunit-tests"),
@@ -310,78 +376,24 @@ var QUnit = {
 				QUnit.ok( false, "Expected " + config.expected + " assertions, but " + config.assertions.length + " were run" );
 			}
 			
-			var good = 0, bad = 0,
-				tests = id("qunit-tests");
+                var good = 0, bad = 0;
 
-			config.stats.all += config.assertions.length;
-			config.moduleStats.all += config.assertions.length;
+                config.stats.all += config.assertions.length;
+                config.moduleStats.all += config.assertions.length;
 
-			if ( tests ) {
-				var ol  = document.createElement("ol");
+                for (var i = 0; i < config.assertions.length; i++) {
+                    var assertion = config.assertions[i];
 
-				for ( var i = 0; i < config.assertions.length; i++ ) {
-					var assertion = config.assertions[i];
+                    if (assertion.result) {
+                        good++;
+                    } else {
+                        bad++;
+                        config.stats.bad++;
+                        config.moduleStats.bad++;
+                    }
+                }
 
-					var li = document.createElement("li");
-					li.className = assertion.result ? "pass" : "fail";
-					li.innerHTML = assertion.message || (assertion.result ? "okay" : "failed");
-					ol.appendChild( li );
-
-					if ( assertion.result ) {
-						good++;
-					} else {
-						bad++;
-						config.stats.bad++;
-						config.moduleStats.bad++;
-					}
-				}
-				if (bad == 0) {
-					ol.style.display = "none";
-				}
-
-				var b = document.createElement("strong");
-				b.innerHTML = name + " <b class='counts'>(<b class='failed'>" + bad + "</b>, <b class='passed'>" + good + "</b>, " + config.assertions.length + ")</b>";
-				
-				addEvent(b, "click", function() {
-					var next = b.nextSibling, display = next.style.display;
-					next.style.display = display === "none" ? "block" : "none";
-				});
-				
-				addEvent(b, "dblclick", function(e) {
-					var target = e && e.target ? e.target : window.event.srcElement;
-					if ( target.nodeName.toLowerCase() == "span" || target.nodeName.toLowerCase() == "b" ) {
-						target = target.parentNode;
-					}
-					if ( window.location && target.nodeName.toLowerCase() === "strong" ) {
-						window.location.search = "?" + encodeURIComponent(getText([target]).replace(/\(.+\)$/, "").replace(/(^\s*|\s*$)/g, ""));
-					}
-				});
-
-				var li = id("current-test-output");
-				li.id = "";
-				li.className = bad ? "fail" : "pass";
-				li.style.display = resultDisplayStyle(!bad);
-				li.removeChild( li.firstChild );
-				li.appendChild( b );
-				li.appendChild( ol );
-
-				if ( bad ) {
-					var toolbar = id("qunit-testrunner-toolbar");
-					if ( toolbar ) {
-						toolbar.style.display = "block";
-						id("qunit-filter-pass").disabled = null;
-					}
-				}
-
-			} else {
-				for ( var i = 0; i < config.assertions.length; i++ ) {
-					if ( !config.assertions[i].result ) {
-						bad++;
-						config.stats.bad++;
-						config.moduleStats.bad++;
-					}
-				}
-			}
+                HtmlOutputWriter.printTestResultMessage(config, testName, good, bad);
 
 			try {
 				QUnit.reset();
@@ -766,22 +778,7 @@ function resultDisplayStyle(passed) {
 	return passed && id("qunit-filter-pass") && id("qunit-filter-pass").checked ? 'none' : '';
 }
 
-function escapeHtml(s) {
-	if (!s) {
-		return "";
-	}
-	s = s + "";
-	return s.replace(/[\&"<>\\]/g, function(s) {
-		switch(s) {
-			case "&": return "&amp;";
-			case "\\": return "\\\\";
-			case '"': return '\"';
-			case "<": return "&lt;";
-			case ">": return "&gt;";
-			default: return s;
-		}
-	});
-}
+
 
 function synchronize( callback ) {
 	config.queue.push( callback );
@@ -873,11 +870,6 @@ function addEvent(elem, type, fn) {
 	} else {
 		fn();
 	}
-}
-
-function id(name) {
-	return !!(typeof document !== "undefined" && document && document.getElementById) &&
-		document.getElementById( name );
 }
 
 // Test for equality any JavaScript type.
