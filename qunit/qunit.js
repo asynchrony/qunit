@@ -33,6 +33,47 @@
             }
         },
 
+
+        clearHeaders: function () {
+            var tests = this.id("qunit-tests"),
+			    banner = this.id("qunit-banner"),
+			    result = this.id("qunit-testresult");
+
+            if (tests) {
+                tests.innerHTML = "";
+            }
+
+            if (banner) {
+                banner.className = "";
+            }
+
+            if (result) {
+                result.parentNode.removeChild(result);
+            }
+        },
+
+        escapeMessageForOutput: function (msg) {
+            return this.escapeHtml(msg);
+        },
+
+        escapeHtml: function (s) {
+            if (!s) {
+                return "";
+            }
+
+            s = s + "";
+            return s.replace(/[\&"<>\\]/g, function (s) {
+                switch (s) {
+                    case "&": return "&amp;";
+                    case "\\": return "\\\\";
+                    case '"': return '\"';
+                    case "<": return "&lt;";
+                    case ">": return "&gt;";
+                    default: return s;
+                }
+            });
+        },
+
         id: function (name) {
             return !!(typeof document !== "undefined" && document && document.getElementById) &&
 	        document.getElementById(name);
@@ -259,8 +300,7 @@ var QUnit = {
 			result: a,
 			message: msg
 		};
-		msg = escapeHtml(msg);
-		QUnit.log(a, msg, details);
+        QUnit.log(a, HtmlOutputWriter.escapeMessageForOutput(msg), details);
 		config.assertions.push({
 			result: a,
 			message: msg
@@ -409,21 +449,7 @@ extend(QUnit, {
 			queue: []
 		});
 
-		var tests = id("qunit-tests"),
-			banner = id("qunit-banner"),
-			result = id("qunit-testresult");
-
-		if ( tests ) {
-			tests.innerHTML = "";
-		}
-
-		if ( banner ) {
-			banner.className = "";
-		}
-
-		if ( result ) {
-			result.parentNode.removeChild( result );
-		}
+        HtmlOutputWriter.clearHeaders();
 	},
 	
 	/**
