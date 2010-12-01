@@ -52,6 +52,17 @@
             }
         },
 
+        reset: function (config) {
+            if (window.jQuery) {
+                jQuery("#main, #qunit-fixture").html(config.fixture);
+            } else {
+                var main = this.id('main') || this.id('qunit-fixture');
+                if (main) {
+                    main.innerHTML = config.fixture;
+                }
+            }
+        },
+
         escapeMessageForOutput: function (msg) {
             return this.escapeHtml(msg);
         },
@@ -458,14 +469,7 @@ extend(QUnit, {
 	 * If jQuery is available, uses jQuery's html(), otherwise just innerHTML.
 	 */
 	reset: function() {
-		if ( window.jQuery ) {
-			jQuery( "#main, #qunit-fixture" ).html( config.fixture );
-		} else {
-			var main = id( 'main' ) || id( 'qunit-fixture' );
-			if ( main ) {
-				main.innerHTML = config.fixture;
-			}
-		}
+            HtmlOutputWriter.reset(config);
 	},
 	
 	/**
